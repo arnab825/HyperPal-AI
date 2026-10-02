@@ -1,4 +1,4 @@
-// Open-Source & Multi-Provider AI Engine (Gemini, Groq Llama/Mixtral, Ollama, OpenAI)
+// Open-Source & Multi-Provider AI Engine (Gemini, Groq Llama/Mixtral/DeepSeek, Ollama, OpenAI)
 export const PERSONAS = {
   hype: {
     id: 'hype',
@@ -52,15 +52,19 @@ export const SITUATIONS = [
 ];
 
 export const GROQ_MODELS = [
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B (Meta Open-Source Flagship)', tag: 'Recommended' },
-  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B (Ultra-Fast 750+ tok/s)', tag: 'Fastest' },
+  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Latest Meta Flagship)', tag: 'Recommended' },
+  { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B (High Reasoning)', tag: 'New' },
+  { id: 'qwen-2.5-32b', name: 'Qwen 2.5 32B (Top Open Benchmark)', tag: 'New' },
+  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant (Ultra-Fast 750+ tok/s)', tag: 'Fastest' },
   { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Mistral MoE Open Model)', tag: 'Popular' },
-  { id: 'gemma2-9b-it', name: 'Gemma 2 9B (Google Open Weights)', tag: 'Accurate' },
+  { id: 'gemma2-9b-it', name: 'Gemma 2 9B (Google Open Weights)', tag: 'Efficient' },
 ];
 
 export const GEMINI_MODELS = [
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Ultra-fast & latest)', tag: 'Default' },
-  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Reliable & fast)', tag: 'Stable' },
+  { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Configured in .env)', tag: 'Active' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Ultra-fast & latest)', tag: 'Latest' },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (Next-Gen)', tag: 'Fast' },
+  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Reliable production)', tag: 'Stable' },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Deep reasoning)', tag: 'Pro' },
 ];
 
@@ -88,15 +92,15 @@ export function resolveCredentials(customKey = '', customEndpoint = '', customMo
     else provider = 'gemini';
   }
 
-  // Model resolution
+  // Model resolution: prioritize user selection > env variable > default
   let activeModel = (customModel || '').trim();
   if (!activeModel) {
     if (provider === 'groq') {
-      activeModel = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
+      activeModel = (import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile').trim();
     } else if (provider === 'gemini') {
-      activeModel = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+      activeModel = (import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.6-flash').trim();
     } else {
-      activeModel = import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini';
+      activeModel = (import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini').trim();
     }
   }
 
@@ -154,7 +158,7 @@ async function callOpenAICompatible({ endpoint, apiKey, model, prompt, isJson = 
       if (content) return content.trim();
     } else {
       const err = await res.text();
-      console.warn(`API call to ${endpoint} failed with ${res.status}:`, err);
+      console.warn(`API call to ${endpoint} with model ${model} failed with ${res.status}:`, err);
     }
   } catch (err) {
     console.warn(`API call error:`, err);
@@ -162,13 +166,14 @@ async function callOpenAICompatible({ endpoint, apiKey, model, prompt, isJson = 
   return null;
 }
 
-// Google Gemini API caller
+// Google Gemini API caller with automatic fallback cascade
 async function callGemini({ apiKey, prompt, isJson = false, model }) {
   const modelsToTry = Array.from(new Set([
     model,
+    'gemini-3.6-flash',
     'gemini-2.5-flash',
-    'gemini-1.5-flash',
     'gemini-2.0-flash',
+    'gemini-1.5-flash',
   ])).filter(Boolean);
 
   for (const m of modelsToTry) {
@@ -197,6 +202,9 @@ async function callGemini({ apiKey, prompt, isJson = false, model }) {
         const data = await res.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) return text.trim();
+      } else {
+        const errData = await res.text();
+        console.warn(`Gemini model ${m} returned ${res.status}, trying next fallback...`, errData);
       }
     } catch (err) {
       console.warn(`Gemini model ${m} network call error:`, err);
@@ -246,7 +254,7 @@ Guidelines:
 4. End with an unforgettable punchy rallying cry.
 Keep it between 120-180 words, punchy and memorable.`;
 
-  // 1. Groq (Llama 3.3, Mixtral)
+  // 1. Groq (Llama 3.3, Mixtral, DeepSeek)
   if (creds.provider === 'groq' && creds.activeKey) {
     const response = await callOpenAICompatible({
       endpoint: 'https://api.groq.com/openai/v1/chat/completions',
@@ -264,7 +272,7 @@ Keep it between 120-180 words, punchy and memorable.`;
     const response = await callGemini({
       apiKey: geminiKey,
       prompt,
-      model: creds.activeModel || 'gemini-2.5-flash',
+      model: creds.activeModel || 'gemini-3.6-flash',
       isJson: false,
     });
     if (response) return response;
@@ -347,7 +355,7 @@ Return ONLY a valid JSON object with these exact keys:
   "microAction": "A simple 2-minute actionable physical or mental step they can do right now"
 }`;
 
-  // 1. Groq (Llama / Mixtral)
+  // 1. Groq (Llama / Mixtral / DeepSeek)
   if (creds.provider === 'groq' && creds.activeKey) {
     const raw = await callOpenAICompatible({
       endpoint: 'https://api.groq.com/openai/v1/chat/completions',
@@ -373,7 +381,7 @@ Return ONLY a valid JSON object with these exact keys:
     const raw = await callGemini({
       apiKey: geminiKey,
       prompt,
-      model: creds.activeModel || 'gemini-2.5-flash',
+      model: creds.activeModel || 'gemini-3.6-flash',
       isJson: true,
     });
     if (raw) {

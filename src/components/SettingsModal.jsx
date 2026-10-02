@@ -1,24 +1,38 @@
-import React, { useState } from 'react';
-import { X, Sparkles, Sliders, Shield, Check, Info, ExternalLink, CheckCircle2, Zap, Cpu } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, Sparkles, Sliders, Shield, Check, Info, ExternalLink, CheckCircle2, Zap, Cpu, Edit3 } from 'lucide-react';
 import { resolveCredentials, GROQ_MODELS, GEMINI_MODELS } from '../services/aiService';
 
 export default function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }) {
-  const [provider, setProvider] = useState(settings.provider || 'gemini');
+  const creds = resolveCredentials(settings.apiKey, settings.apiEndpoint, settings.model, settings.provider);
+
+  const [provider, setProvider] = useState(settings.provider || creds.provider || 'gemini');
   const [apiKey, setApiKey] = useState(settings.apiKey || '');
-  const [model, setModel] = useState(settings.model || '');
+  const [model, setModel] = useState(settings.model || creds.activeModel);
+  const [isCustomModelInput, setIsCustomModelInput] = useState(false);
   const [soundEffects, setSoundEffects] = useState(settings.soundEffects !== false);
   const [saved, setSaved] = useState(false);
 
-  if (!isOpen) return null;
+  // Dynamic Gemini models list with .env model always included at the top
+  const geminiList = useMemo(() => {
+    const envModel = (import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.6-flash').trim();
+    const existing = GEMINI_MODELS.find(m => m.id === envModel);
+    if (!existing) {
+      return [{ id: envModel, name: `${envModel} (From .env)`, tag: 'Active' }, ...GEMINI_MODELS];
+    }
+    return GEMINI_MODELS.map(m => m.id === envModel ? { ...m, tag: 'Active Default' } : m);
+  }, []);
 
-  const creds = resolveCredentials(settings.apiKey, settings.apiEndpoint, settings.model, settings.provider);
+  if (!isOpen) return null;
 
   const handleProviderChange = (newProvider) => {
     setProvider(newProvider);
+    setIsCustomModelInput(false);
     if (newProvider === 'groq') {
-      setModel('llama-3.3-70b-versatile');
+      const defaultGroq = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
+      setModel(defaultGroq);
     } else if (newProvider === 'gemini') {
-      setModel('gemini-2.5-flash');
+      const defaultGemini = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.6-flash';
+      setModel(defaultGemini);
     } else if (newProvider === 'ollama') {
       setModel('llama3.2');
     }
@@ -76,12 +90,12 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
           {creds.isBrowserOverride ? (
             <span className="flex items-center gap-1.5 text-blue-400 font-bold truncate">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Browser Custom Key ({creds.provider.toUpperCase()})</span>
+              <span className="truncate">Browser Custom Key ({model || creds.activeModel})</span>
             </span>
           ) : creds.hasEnvGemini ? (
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold truncate">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Default Free Gemini ({creds.activeModel})</span>
+              <span className="truncate">Default Free Gemini ({model || creds.activeModel})</span>
             </span>
           ) : (
             <span className="text-amber-400 font-medium">Built-in Offline Engine</span>
@@ -144,13 +158,30 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
 
           {/* Model Selector based on Provider */}
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                {provider === 'groq' ? 'Groq Open-Source Model' : provider === 'gemini' ? 'Gemini Model' : 'Local Model Name'}
+                {provider === 'groq' ? 'Groq Open Model' : provider === 'gemini' ? 'Gemini Model' : 'Local Model'}
               </label>
+
+              <button
+                type="button"
+                onClick={() => setIsCustomModelInput(!isCustomModelInput)}
+                className="text-[11px] text-amber-300 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <Edit3 className="w-3 h-3" />
+                <span>{isCustomModelInput ? 'Select from list' : 'Type custom model ID'}</span>
+              </button>
             </div>
 
-            {provider === 'groq' ? (
+            {isCustomModelInput ? (
+              <input
+                type="text"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="e.g. gemini-3.6-flash, deepseek-r1-distill-llama-70b"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-amber-400 font-mono"
+              />
+            ) : provider === 'groq' ? (
               <select
                 value={model || 'llama-3.3-70b-versatile'}
                 onChange={(e) => setModel(e.target.value)}
@@ -164,16 +195,15 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
               </select>
             ) : provider === 'gemini' ? (
               <select
-                value={model || 'gemini-2.5-flash'}
+                value={model || geminiList[0]?.id || 'gemini-3.6-flash'}
                 onChange={(e) => setModel(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-blue-400"
               >
-                {GEMINI_MODELS.map((m) => (
+                {geminiList.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name} [{m.tag}]
                   </option>
                 ))}
-                <option value="gemini-3.6-flash">gemini-3.6-flash (Custom)</option>
               </select>
             ) : (
               <input
