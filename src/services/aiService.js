@@ -70,15 +70,53 @@ export const COGNITIVE_DISTORTIONS = [
   },
 ];
 
-// Google Gemini API caller
-async function callGemini({ apiKey, prompt, isJson = false, model = 'gemini-2.5-flash' }) {
-  const modelsToTry = [
+// Helper to determine active credentials (.env vs browser override)
+export function resolveCredentials(customKey, customEndpoint, customModel) {
+  const envGeminiKey = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
+  const envOpenAIKey = (import.meta.env.VITE_OPENAI_API_KEY || '').trim();
+
+  let geminiKey = '';
+  let openaiKey = '';
+
+  const activeKey = (customKey || '').trim();
+
+  if (activeKey) {
+    if (activeKey.startsWith('sk-')) {
+      openaiKey = activeKey;
+    } else {
+      geminiKey = activeKey;
+    }
+  } else {
+    geminiKey = envGeminiKey;
+    openaiKey = envOpenAIKey;
+  }
+
+  const geminiModel = (customModel || import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  const openaiEndpoint = (customEndpoint || import.meta.env.VITE_AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions').trim();
+  const openaiModel = (import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini').trim();
+
+  return {
+    geminiKey,
+    openaiKey,
+    geminiModel,
+    openaiEndpoint,
+    openaiModel,
+    hasEnvGemini: Boolean(envGeminiKey),
+    isBrowserOverride: Boolean(activeKey),
+  };
+}
+
+// Google Gemini API caller with automatic graceful cascade
+async function callGemini({ apiKey, prompt, isJson = false, model }) {
+  // First try the user's requested model, then standard models if model name varies
+  const modelsToTry = Array.from(new Set([
     model,
     'gemini-2.5-flash',
     'gemini-1.5-flash',
-  ];
+    'gemini-2.0-flash',
+  ])).filter(Boolean);
 
-  for (const m of Array.from(new Set(modelsToTry))) {
+  for (const m of modelsToTry) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
       const payload = {
@@ -104,28 +142,20 @@ async function callGemini({ apiKey, prompt, isJson = false, model = 'gemini-2.5-
         const data = await res.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) return text.trim();
+      } else {
+        const errData = await res.text();
+        console.warn(`Gemini model ${m} returned ${res.status}:`, errData);
       }
     } catch (err) {
-      console.warn(`Gemini model ${m} failed, trying next fallback...`, err);
+      console.warn(`Gemini model ${m} network call error:`, err);
     }
   }
   return null;
 }
 
-// Helper to determine AI provider (Gemini or OpenAI/Groq)
-function resolveCredentials(customKey, customEndpoint) {
-  const geminiKey = (customKey?.startsWith('AIza') ? customKey : '') || import.meta.env.VITE_GEMINI_API_KEY || (customKey?.length > 30 && !customKey?.startsWith('sk-') ? customKey : '');
-  const openaiKey = (!customKey?.startsWith('AIza') ? customKey : '') || import.meta.env.VITE_OPENAI_API_KEY || '';
-  const geminiModel = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
-  const openaiEndpoint = customEndpoint || import.meta.env.VITE_AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions';
-  const openaiModel = import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini';
-
-  return { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel };
-}
-
 // Generate Hype Speech using Gemini or OpenAI or Procedural fallback
-export async function generateHypeSpeech({ friendName = 'Alex', persona = 'hype', situation = '', notes = '', apiKey = '', apiEndpoint = '' }) {
-  const { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel } = resolveCredentials(apiKey, apiEndpoint);
+export async function generateHypeSpeech({ friendName = 'Alex', persona = 'hype', situation = '', notes = '', apiKey = '', apiEndpoint = '', model = '' }) {
+  const { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel } = resolveCredentials(apiKey, apiEndpoint, model);
 
   const prompt = `You are HypePal AI, speaking in the persona of "${PERSONAS[persona]?.name || 'Hype Beast'}".
 Your tone: ${PERSONAS[persona]?.tagline}.
@@ -219,8 +249,8 @@ Stop measuring yourself against an impossible standard of effortless perfection.
 }
 
 // Cognitive Reframing Engine with Gemini / OpenAI / Built-in CBT
-export async function reframeThought({ thought, friendName = 'Alex', apiKey = '', apiEndpoint = '' }) {
-  const { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel } = resolveCredentials(apiKey, apiEndpoint);
+export async function reframeThought({ thought, friendName = 'Alex', apiKey = '', apiEndpoint = '', model = '' }) {
+  const { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel } = resolveCredentials(apiKey, apiEndpoint, model);
 
   const prompt = `You are an expert cognitive behavioral therapy (CBT) mindset coach analyzing an anxious developer/student's thought.
 Thought from ${friendName}: "${thought}"
