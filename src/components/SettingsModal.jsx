@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { X, Sparkles, Sliders, Shield, Check, Info, ExternalLink, CheckCircle2, Zap, Cpu, Edit3 } from 'lucide-react';
-import { resolveCredentials, GROQ_MODELS, GEMINI_MODELS } from '../services/aiService';
+import { X, Sparkles, Sliders, Shield, Check, Info, ExternalLink, CheckCircle2, Zap, Cpu, Edit3, Terminal, Copy } from 'lucide-react';
+import { resolveCredentials, GROQ_MODELS, GEMINI_MODELS, OLLAMA_MODELS } from '../services/aiService';
 
 export default function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }) {
   const creds = resolveCredentials(settings.apiKey, settings.apiEndpoint, settings.model, settings.provider);
 
   const [provider, setProvider] = useState(settings.provider || creds.provider || 'gemini');
   const [apiKey, setApiKey] = useState(settings.apiKey || '');
+  const [apiEndpoint, setApiEndpoint] = useState(settings.apiEndpoint || creds.activeEndpoint || 'http://localhost:11434');
   const [model, setModel] = useState(settings.model || creds.activeModel || 'gemini-3.8-flash');
   const [isCustomModelInput, setIsCustomModelInput] = useState(false);
   const [soundEffects, setSoundEffects] = useState(settings.soundEffects !== false);
   const [saved, setSaved] = useState(false);
+  const [copiedCommand, setCopiedCommand] = useState(false);
 
   // Dynamic Gemini models list with .env model included and formatted emojis
   const geminiList = useMemo(() => {
@@ -55,6 +57,9 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
       setModel(defaultGemini);
     } else if (newProvider === 'ollama') {
       setModel('llama3.2');
+      if (!apiEndpoint || apiEndpoint.includes('groq') || apiEndpoint.includes('openai')) {
+        setApiEndpoint('http://localhost:11434');
+      }
     }
   };
 
@@ -64,6 +69,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
       ...settings,
       provider,
       apiKey: apiKey.trim(),
+      apiEndpoint: apiEndpoint.trim(),
       model: model.trim(),
       soundEffects,
     });
@@ -80,6 +86,14 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
       ...settings,
       apiKey: '',
     });
+  };
+
+  const handleCopyOllamaCmd = (cmd) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(cmd);
+      setCopiedCommand(true);
+      setTimeout(() => setCopiedCommand(false), 2000);
+    }
   };
 
   return (
@@ -107,7 +121,17 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
         {/* Current Status Pill */}
         <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs gap-2">
           <span className="text-slate-400 shrink-0">Active Status:</span>
-          {creds.isBrowserOverride ? (
+          {provider === 'ollama' ? (
+            <span className="flex items-center gap-1.5 text-purple-400 font-bold truncate">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Local Ollama ({model || 'llama3.2'}) • 100% Offline</span>
+            </span>
+          ) : provider === 'groq' ? (
+            <span className="flex items-center gap-1.5 text-orange-400 font-bold truncate">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Groq Open AI ({model})</span>
+            </span>
+          ) : creds.isBrowserOverride ? (
             <span className="flex items-center gap-1.5 text-blue-400 font-bold truncate">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Browser Custom Key ({model === 'gemini-3.6-flash' ? '⚡ Gemini 3.6 Flash' : model})</span>
@@ -180,7 +204,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                {provider === 'groq' ? 'Groq Open Model' : provider === 'gemini' ? 'Gemini Model' : 'Local Model'}
+                {provider === 'groq' ? 'Groq Open Model' : provider === 'gemini' ? 'Gemini Model' : 'Local Ollama Model'}
               </label>
 
               <button
@@ -198,8 +222,8 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                 type="text"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
-                placeholder="e.g. gemini-3.8-flash, llama-3.3-70b-versatile"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-blue-400 font-mono"
+                placeholder="e.g. llama3.2, mistral, deepseek-r1:8b"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-purple-400 font-mono"
               />
             ) : provider === 'groq' ? (
               <select
@@ -226,17 +250,100 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                 ))}
               </select>
             ) : (
-              <input
-                type="text"
-                value={model || 'llama3.2'}
-                onChange={(e) => setModel(e.target.value)}
-                placeholder="e.g. llama3.2, mistral, gemma2"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-purple-400 font-mono"
-              />
+              <div>
+                <select
+                  value={model || 'llama3.2'}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-purple-400"
+                >
+                  {OLLAMA_MODELS.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} [{m.tag}]
+                    </option>
+                  ))}
+                </select>
+
+                {/* Quick Model Chips */}
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  <span className="text-[10px] text-slate-400">Quick pick:</span>
+                  {['llama3.2', 'mistral', 'deepseek-r1:8b', 'qwen2.5:7b', 'gemma2:2b'].map((mId) => (
+                    <button
+                      key={mId}
+                      type="button"
+                      onClick={() => setModel(mId)}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-mono border transition-all cursor-pointer ${
+                        model === mId
+                          ? 'bg-purple-500/20 border-purple-400 text-purple-200 font-bold'
+                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      }`}
+                    >
+                      {mId}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
-          {/* API Key Input */}
+          {/* Local Ollama Endpoint & Guide */}
+          {provider === 'ollama' && (
+            <div className="space-y-3 pt-1">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block mb-1">
+                  Local Ollama Endpoint URL
+                </label>
+                <input
+                  type="text"
+                  value={apiEndpoint}
+                  onChange={(e) => setApiEndpoint(e.target.value)}
+                  placeholder="http://localhost:11434"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs font-mono focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              {/* How to use Ollama Guide Card */}
+              <div className="p-3.5 rounded-2xl bg-purple-950/20 border border-purple-800/40 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-purple-300 flex items-center gap-1.5">
+                    <Terminal className="w-3.5 h-3.5 text-purple-400" />
+                    How to run Local Ollama (100% Free &amp; Offline):
+                  </span>
+                  <a
+                    href="https://ollama.com/download"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-purple-400 hover:underline flex items-center gap-0.5"
+                  >
+                    <span>ollama.com</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+
+                <ol className="list-decimal list-inside space-y-1 text-slate-300 text-[11px] leading-relaxed">
+                  <li>Download &amp; install Ollama from <a href="https://ollama.com/download" target="_blank" rel="noreferrer" className="text-purple-300 underline font-semibold">ollama.com</a>.</li>
+                  <li>In your PowerShell or Terminal, start your model:</li>
+                </ol>
+
+                <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/90 border border-purple-900/40 font-mono text-[11px] text-purple-200">
+                  <span className="truncate mr-2">ollama run {model || 'llama3.2'}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyOllamaCmd(`ollama run ${model || 'llama3.2'}`)}
+                    className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 text-[10px] font-sans font-bold cursor-pointer transition-colors"
+                  >
+                    {copiedCommand ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedCommand ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+
+                <p className="text-[10px] text-slate-400 leading-normal">
+                  💡 <em>Note: If browser blocks local network requests (CORS), run:</em> <code className="text-purple-300 font-mono">OLLAMA_ORIGINS=&quot;*&quot; ollama serve</code>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* API Key Input (Groq or Gemini) */}
           {provider !== 'ollama' && (
             <div>
               <div className="flex items-center justify-between mb-1">

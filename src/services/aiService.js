@@ -70,6 +70,16 @@ export const GEMINI_MODELS = [
   { id: 'gemini-2.5-pro', name: '🧠 Gemini 2.5 Pro (Deep Reasoning & Analysis)', tag: 'Pro' },
 ];
 
+// Popular Local Ollama Models (Run 100% offline via ollama.com)
+export const OLLAMA_MODELS = [
+  { id: 'llama3.2', name: '🦙 Llama 3.2 (3B - Fast & Lightweight)', tag: 'Recommended' },
+  { id: 'llama3.1', name: '🦙 Llama 3.1 (8B - Balanced Quality)', tag: 'Popular' },
+  { id: 'mistral', name: '🌪️ Mistral (7B - Proven & High Agency)', tag: 'Proven' },
+  { id: 'deepseek-r1:8b', name: '🧠 DeepSeek R1 (8B - Distilled Reasoning)', tag: 'Reasoning' },
+  { id: 'qwen2.5:7b', name: '💎 Qwen 2.5 (7B - Top Open Benchmark)', tag: 'Fast' },
+  { id: 'gemma2:2b', name: '🔬 Gemma 2 (2B - Ultra-Lightweight)', tag: 'Ultra-Light' },
+];
+
 // Helper to determine active credentials and provider
 export function resolveCredentials(customKey = '', customEndpoint = '', customModel = '', customProvider = '') {
   const envGeminiKey = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
