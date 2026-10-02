@@ -10,18 +10,21 @@ import { Heart, Sparkles, Code2 } from 'lucide-react';
 
 const INITIAL_WINS = [
   {
+    id: 'win-1',
     title: 'Crushed the Complex System Bug',
     content: 'Spent 8 hours stuck on a race condition. Took a walk, reset my mindset, and nailed the fix with a clean mutex lock.',
     category: 'coding',
     date: 'Oct 2, 2026',
   },
   {
+    id: 'win-2',
     title: 'Completed Live Tech Screening',
     content: 'Felt intense pre-interview anxiety, used HypePal AI to reframe the panic, and had an engaging conversation with the engineering lead.',
     category: 'career',
     date: 'Sep 28, 2026',
   },
   {
+    id: 'win-3',
     title: 'First Open Source PR Merged',
     content: 'Shipped a documentation fix and UI polish to an open source repo for Hacktoberfest.',
     category: 'coding',
@@ -48,11 +51,19 @@ export default function App() {
     }
   });
 
-  // Victory Vault entries with localStorage persistence
+  // Victory Vault entries with localStorage persistence & id normalization
   const [wins, setWins] = useState(() => {
     try {
       const saved = localStorage.getItem('hypepal_wins');
-      return saved ? JSON.parse(saved) : INITIAL_WINS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((w, i) => ({
+          ...w,
+          id: w.id || `win_${Date.now()}_${i}`,
+          category: (w.category || 'coding').toLowerCase(),
+        }));
+      }
+      return INITIAL_WINS;
     } catch {
       return INITIAL_WINS;
     }
@@ -81,11 +92,19 @@ export default function App() {
   }, [settings]);
 
   const handleAddWin = (newWin) => {
-    setWins([newWin, ...wins]);
+    const winItem = {
+      ...newWin,
+      id: `win_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      category: (newWin.category || 'coding').toLowerCase(),
+    };
+    setWins([winItem, ...wins]);
   };
 
-  const handleDeleteWin = (index) => {
-    setWins(wins.filter((_, i) => i !== index));
+  const handleDeleteWin = (winToDelete) => {
+    setWins(prevWins => prevWins.filter(w => {
+      if (winToDelete?.id && w.id) return w.id !== winToDelete.id;
+      return w.title !== winToDelete.title || w.date !== winToDelete.date;
+    }));
   };
 
   return (
