@@ -12,14 +12,34 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
   const [soundEffects, setSoundEffects] = useState(settings.soundEffects !== false);
   const [saved, setSaved] = useState(false);
 
-  // Dynamic Gemini models list with .env model included
+  // Dynamic Gemini models list with .env model included and formatted emojis
   const geminiList = useMemo(() => {
     const envModel = (import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.8-flash').trim();
     const existing = GEMINI_MODELS.find(m => m.id === envModel);
+
+    // Clean title formatter with emoji for any custom model
+    const formatName = (id) => {
+      const known = {
+        'gemini-3.8-flash': '🚀 Gemini 3.8 Flash (Latest Flagship • New)',
+        'gemini-3.7-flash': '⚡ Gemini 3.7 Flash (High-Speed Agentic)',
+        'gemini-3.6-flash': '⚡ Gemini 3.6 Flash',
+        'gemini-3.5-flash-lite': '💨 Gemini 3.5 Flash Lite (Ultra-Low Latency)',
+        'gemini-2.5-flash': '🛡️ Gemini 2.5 Flash (Production Standard)',
+        'gemini-2.5-pro': '🧠 Gemini 2.5 Pro (Deep Reasoning & Analysis)',
+      };
+      if (known[id]) return known[id];
+      const clean = id
+        .replace(/^gemini-/i, 'Gemini ')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      return `⚡ ${clean}`;
+    };
+
     if (!existing) {
-      return [{ id: envModel, name: `${envModel} (From .env)`, tag: 'Active' }, ...GEMINI_MODELS];
+      return [{ id: envModel, name: formatName(envModel), tag: 'Active' }, ...GEMINI_MODELS];
     }
-    return GEMINI_MODELS.map(m => m.id === envModel ? { ...m, tag: 'Active Default' } : m);
+    const remaining = GEMINI_MODELS.filter(m => m.id !== envModel);
+    return [{ ...existing, name: existing.id === 'gemini-3.6-flash' ? '⚡ Gemini 3.6 Flash' : existing.name, tag: 'Active' }, ...remaining];
   }, []);
 
   if (!isOpen) return null;
@@ -90,12 +110,12 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
           {creds.isBrowserOverride ? (
             <span className="flex items-center gap-1.5 text-blue-400 font-bold truncate">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Browser Custom Key ({model})</span>
+              <span className="truncate">Browser Custom Key ({model === 'gemini-3.6-flash' ? '⚡ Gemini 3.6 Flash' : model})</span>
             </span>
           ) : creds.hasEnvGemini ? (
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold truncate">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Default Free Gemini ({model})</span>
+              <span className="truncate">Default Free Gemini ({model === 'gemini-3.6-flash' ? '⚡ Gemini 3.6 Flash' : model})</span>
             </span>
           ) : (
             <span className="text-amber-400 font-medium">Built-in Offline Engine</span>
@@ -285,7 +305,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-blue-500/20 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-blue-500/20 cursor-pointer"
             >
               {saved ? <Check className="w-3.5 h-3.5 text-white" /> : null}
               <span>{saved ? 'Saved!' : 'Save Preferences'}</span>
