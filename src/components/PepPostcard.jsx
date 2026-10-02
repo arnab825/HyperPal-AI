@@ -100,15 +100,27 @@ From: ${signature}
             </div>
 
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 block mb-1">Quick Presets:</span>
-              <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-semibold text-slate-400 block mb-1.5">Quick Presets:</span>
+              <div className="flex flex-col gap-2">
                 {PRESET_MESSAGES.map((msg, i) => (
                   <button
                     key={i}
+                    type="button"
                     onClick={() => setMessage(msg)}
-                    className="text-left text-xs p-2 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-800/60 text-slate-300 transition-all line-clamp-1 cursor-pointer"
+                    className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
+                      message === msg
+                        ? 'bg-pink-500/10 border-pink-500/40 text-pink-200 shadow-sm'
+                        : 'bg-slate-900/60 hover:bg-slate-800/80 border-slate-800 text-slate-300 hover:text-white'
+                    }`}
                   >
-                    "{msg}"
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs shrink-0 select-none">
+                        {i === 0 ? '🚀' : i === 1 ? '💖' : '☕'}
+                      </span>
+                      <span className="text-xs truncate block min-w-0 flex-1 leading-normal">
+                        "{msg}"
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>
