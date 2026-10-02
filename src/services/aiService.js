@@ -1,4 +1,4 @@
-// HypePal AI Intelligence Engine
+// HypePal AI Intelligence Engine with Google Gemini & Multi-LLM Support
 export const PERSONAS = {
   hype: {
     id: 'hype',
@@ -70,22 +70,64 @@ export const COGNITIVE_DISTORTIONS = [
   },
 ];
 
-// Helper to resolve API keys from either UI state or Vite .env
-function getEffectiveKeyAndEndpoint(customKey, customEndpoint) {
-  const envKey = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_AI_API_KEY || '';
-  const key = (customKey || envKey || '').trim();
-  const endpoint = (customEndpoint || import.meta.env.VITE_AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions').trim();
-  const model = import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini';
-  return { key, endpoint, model };
+// Google Gemini API caller
+async function callGemini({ apiKey, prompt, isJson = false, model = 'gemini-2.5-flash' }) {
+  const modelsToTry = [
+    model,
+    'gemini-2.5-flash',
+    'gemini-1.5-flash',
+  ];
+
+  for (const m of Array.from(new Set(modelsToTry))) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+      const payload = {
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }]
+          }
+        ],
+        generationConfig: {
+          temperature: isJson ? 0.7 : 0.85,
+          ...(isJson ? { responseMimeType: 'application/json' } : {})
+        }
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text.trim();
+      }
+    } catch (err) {
+      console.warn(`Gemini model ${m} failed, trying next fallback...`, err);
+    }
+  }
+  return null;
 }
 
-// Rich AI generator that calls LLM when key exists or falls back to procedural engine
-export async function generateHypeSpeech({ friendName = 'Alex', persona = 'hype', situation = '', notes = '', apiKey = '', apiEndpoint = '' }) {
-  const { key, endpoint, model } = getEffectiveKeyAndEndpoint(apiKey, apiEndpoint);
+// Helper to determine AI provider (Gemini or OpenAI/Groq)
+function resolveCredentials(customKey, customEndpoint) {
+  const geminiKey = (customKey?.startsWith('AIza') ? customKey : '') || import.meta.env.VITE_GEMINI_API_KEY || (customKey?.length > 30 && !customKey?.startsWith('sk-') ? customKey : '');
+  const openaiKey = (!customKey?.startsWith('AIza') ? customKey : '') || import.meta.env.VITE_OPENAI_API_KEY || '';
+  const geminiModel = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+  const openaiEndpoint = customEndpoint || import.meta.env.VITE_AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions';
+  const openaiModel = import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini';
 
-  if (key) {
-    try {
-      const prompt = `You are HypePal AI, speaking in the persona of "${PERSONAS[persona]?.name || 'Hype Beast'}".
+  return { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel };
+}
+
+// Generate Hype Speech using Gemini or OpenAI or Procedural fallback
+export async function generateHypeSpeech({ friendName = 'Alex', persona = 'hype', situation = '', notes = '', apiKey = '', apiEndpoint = '' }) {
+  const { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel } = resolveCredentials(apiKey, apiEndpoint);
+
+  const prompt = `You are HypePal AI, speaking in the persona of "${PERSONAS[persona]?.name || 'Hype Beast'}".
 Your tone: ${PERSONAS[persona]?.tagline}.
 You are giving a heartfelt, powerful, 3-paragraph motivational pep talk dedicated directly to "${friendName}".
 Situation: ${situation || 'Need general motivation'}
@@ -97,14 +139,32 @@ Guidelines:
 4. End with an unforgettable punchy rallying cry.
 Keep it between 120-180 words, punchy and memorable.`;
 
-      const response = await fetch(endpoint, {
+  // 1. Try Gemini if Gemini key exists
+  if (geminiKey) {
+    try {
+      const responseText = await callGemini({
+        apiKey: geminiKey,
+        prompt,
+        model: geminiModel,
+        isJson: false,
+      });
+      if (responseText) return responseText;
+    } catch (e) {
+      console.warn('Gemini call failed, checking fallback...', e);
+    }
+  }
+
+  // 2. Try OpenAI/Groq if OpenAI key exists
+  if (openaiKey) {
+    try {
+      const response = await fetch(openaiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
+          'Authorization': `Bearer ${openaiKey}`,
         },
         body: JSON.stringify({
-          model,
+          model: openaiModel,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.85,
         }),
@@ -116,11 +176,11 @@ Keep it between 120-180 words, punchy and memorable.`;
         if (content) return content.trim();
       }
     } catch (e) {
-      console.warn('Live API call failed, seamlessly falling back to local procedural AI engine', e);
+      console.warn('OpenAI API call failed, falling back to local engine', e);
     }
   }
 
-  // Built-in On-Device Procedural AI Engine (Always Works!)
+  // 3. Built-in On-Device Procedural AI Engine (Always Works!)
   await new Promise(r => setTimeout(r, 600));
 
   const friend = friendName || 'Friend';
@@ -158,32 +218,54 @@ Whatever resistance you're feeling right now ${customContext} is not evidence th
 Stop measuring yourself against an impossible standard of effortless perfection. Break this down: what is the single highest-leverage action you can take in the next 15 minutes? Execute that one thing. You have solved 100% of your hardest days so far, and you will navigate this one with flying colors.`;
 }
 
-// Cognitive Reframing Engine with optional LLM JSON generation
+// Cognitive Reframing Engine with Gemini / OpenAI / Built-in CBT
 export async function reframeThought({ thought, friendName = 'Alex', apiKey = '', apiEndpoint = '' }) {
-  const { key, endpoint, model } = getEffectiveKeyAndEndpoint(apiKey, apiEndpoint);
+  const { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel } = resolveCredentials(apiKey, apiEndpoint);
 
-  if (key) {
-    try {
-      const prompt = `You are an expert cognitive behavioral therapy (CBT) mindset coach analyzing an anxious developer/student's thought.
+  const prompt = `You are an expert cognitive behavioral therapy (CBT) mindset coach analyzing an anxious developer/student's thought.
 Thought from ${friendName}: "${thought}"
 
 Return ONLY a valid JSON object with these exact keys:
 {
-  "distortion": "Name of cognitive distortion (e.g. Catastrophizing, Imposter Syndrome, All-or-Nothing Thinking, Mind Reading)",
+  "distortion": "Name of cognitive distortion (e.g. Catastrophizing, Imposter Syndrome Trap, All-or-Nothing Thinking, Mind Reading)",
   "distortionDesc": "Brief 1-2 sentence explanation of why this thought is a trap",
   "realityCheck": "The objective, grounded truth/evidence contradicting the trap",
   "reframedThought": "An empowering, realistic reframe written in the first person for ${friendName}",
   "microAction": "A simple 2-minute actionable physical or mental step they can do right now"
 }`;
 
-      const response = await fetch(endpoint, {
+  // 1. Try Gemini
+  if (geminiKey) {
+    try {
+      const text = await callGemini({
+        apiKey: geminiKey,
+        prompt,
+        model: geminiModel,
+        isJson: true,
+      });
+      if (text) {
+        const cleaned = text.replace(/^```json/i, '').replace(/```$/i, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed.distortion && parsed.reframedThought) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Gemini reframe failed, using fallback', e);
+    }
+  }
+
+  // 2. Try OpenAI
+  if (openaiKey) {
+    try {
+      const response = await fetch(openaiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
+          'Authorization': `Bearer ${openaiKey}`,
         },
         body: JSON.stringify({
-          model,
+          model: openaiModel,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.7,
           response_format: { type: 'json_object' },
@@ -205,7 +287,7 @@ Return ONLY a valid JSON object with these exact keys:
     }
   }
 
-  // Built-in Cognitive Analyzer
+  // 3. Built-in Cognitive Analyzer
   await new Promise(r => setTimeout(r, 650));
 
   const t = thought.toLowerCase();
