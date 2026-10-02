@@ -75,7 +75,19 @@ An undeniable evidence locker against imposter syndrome:
 
 ---
 
-### 4. ⚙️ Multi-Engine AI Architecture (Cloud & 100% Offline)
+### 4. 💌 Send a Digital Hype Card (Direct Friend Delivery)
+Craft and deliver high-energy, personalized digital postcards to text, Slack, or DM directly to your friend:
+- **4 Vibrant Aesthetic Themes:** *Neon Cyber*, *Golden Sunset*, *Emerald Aurora*, and *Deep Space*.
+- **1-Click Quick Presets:** Fast curated encouragement messages with zero text overlap.
+- **Instant Live Preview:** Real-time preview card with glowing gradients and one-click clipboard copy.
+
+<p align="center">
+  <img src="docs/screenshots/06-digital-hype-card.png" alt="Send a Digital Hype Card" width="100%" />
+</p>
+
+---
+
+### 5. ⚙️ Multi-Engine AI Architecture (Cloud & 100% Offline)
 Switch seamlessly between cloud acceleration and complete local privacy:
 - **Google Gemini (Default):** Native support for latest Gemini 3.8 Flash, 3.7 Flash, 3.6 Flash, and 2.5 models.
 - **Groq Open AI:** Ultra-fast open-weight inference with Llama 3.3 70B, DeepSeek R1 Distill, Qwen 2.5 32B, and Mixtral.
