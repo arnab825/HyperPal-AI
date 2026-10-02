@@ -1,4 +1,4 @@
-// Open-Source & Multi-Provider AI Engine (Gemini 3.8/3.7, Groq Llama/Mixtral/DeepSeek, Ollama, OpenAI)
+// Open-Source & Multi-Provider AI Engine (Gemini 3.8/3.7/3.5, Groq Llama/Mixtral/DeepSeek, Ollama, OpenAI)
 export const PERSONAS = {
   hype: {
     id: 'hype',
@@ -52,7 +52,7 @@ export const SITUATIONS = [
 ];
 
 export const GROQ_MODELS = [
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Meta Open-Source Flagship)', tag: 'Recommended' },
+  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Meta Open Flagship)', tag: 'Recommended' },
   { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B (High Reasoning)', tag: 'New' },
   { id: 'qwen-2.5-32b', name: 'Qwen 2.5 32B (Top Open Benchmark)', tag: 'New' },
   { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant (Ultra-Fast 750+ tok/s)', tag: 'Fastest' },
@@ -60,12 +60,13 @@ export const GROQ_MODELS = [
   { id: 'gemma2-9b-it', name: 'Gemma 2 9B (Google Open Weights)', tag: 'Efficient' },
 ];
 
+// Modern Gemini 3.x and 2.5 models only (Removed legacy 1.5)
 export const GEMINI_MODELS = [
-  { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash (Latest Flagship • Sep 2026)', tag: 'Newest' },
+  { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash (Latest Flagship • New)', tag: 'Recommended' },
   { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (High-Speed Agentic)', tag: 'Fast' },
   { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (Ultra-Low Latency)', tag: 'Lite' },
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Production Standard)', tag: 'Stable' },
-  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Legacy Fallback)', tag: 'Legacy' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Deep Reasoning & Analysis)', tag: 'Pro' },
 ];
 
 // Helper to determine active credentials and provider
@@ -166,7 +167,7 @@ async function callOpenAICompatible({ endpoint, apiKey, model, prompt, isJson = 
   return null;
 }
 
-// Google Gemini API caller with automatic cascade through 3.8, 3.7, 3.5, 2.5
+// Google Gemini API caller with cascade through modern 3.x and 2.5 (No 1.5)
 async function callGemini({ apiKey, prompt, isJson = false, model }) {
   const modelsToTry = Array.from(new Set([
     model,
@@ -174,7 +175,7 @@ async function callGemini({ apiKey, prompt, isJson = false, model }) {
     'gemini-3.7-flash',
     'gemini-3.5-flash-lite',
     'gemini-2.5-flash',
-    'gemini-1.5-flash',
+    'gemini-2.5-pro',
   ])).filter(Boolean);
 
   for (const m of modelsToTry) {
@@ -267,7 +268,7 @@ Keep it between 120-180 words, punchy and memorable.`;
     if (response) return response;
   }
 
-  // 2. Google Gemini (Default host key or browser key)
+  // 2. Google Gemini (Modern 3.8/3.7/3.5/2.5)
   if ((creds.provider === 'gemini' || !creds.activeKey) && (creds.activeKey || import.meta.env.VITE_GEMINI_API_KEY)) {
     const geminiKey = creds.activeKey || import.meta.env.VITE_GEMINI_API_KEY;
     const response = await callGemini({
@@ -376,7 +377,7 @@ Return ONLY a valid JSON object with these exact keys:
     }
   }
 
-  // 2. Google Gemini (Gemini 3.8 / 3.7 / 3.5)
+  // 2. Google Gemini
   if ((creds.provider === 'gemini' || !creds.activeKey) && (creds.activeKey || import.meta.env.VITE_GEMINI_API_KEY)) {
     const geminiKey = creds.activeKey || import.meta.env.VITE_GEMINI_API_KEY;
     const raw = await callGemini({
