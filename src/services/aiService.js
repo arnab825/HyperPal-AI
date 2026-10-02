@@ -70,21 +70,30 @@ export const COGNITIVE_DISTORTIONS = [
   },
 ];
 
-// Rich AI generator that can also call OpenAI/Gemini/Groq if API key is provided
+// Helper to resolve API keys from either UI state or Vite .env
+function getEffectiveKeyAndEndpoint(customKey, customEndpoint) {
+  const envKey = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_AI_API_KEY || '';
+  const key = (customKey || envKey || '').trim();
+  const endpoint = (customEndpoint || import.meta.env.VITE_AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions').trim();
+  const model = import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini';
+  return { key, endpoint, model };
+}
+
+// Rich AI generator that calls LLM when key exists or falls back to procedural engine
 export async function generateHypeSpeech({ friendName = 'Alex', persona = 'hype', situation = '', notes = '', apiKey = '', apiEndpoint = '' }) {
-  // If user provided a custom API key, call the LLM API
-  if (apiKey) {
+  const { key, endpoint, model } = getEffectiveKeyAndEndpoint(apiKey, apiEndpoint);
+
+  if (key) {
     try {
-      const endpoint = apiEndpoint || 'https://api.openai.com/v1/chat/completions';
       const prompt = `You are HypePal AI, speaking in the persona of "${PERSONAS[persona]?.name || 'Hype Beast'}".
 Your tone: ${PERSONAS[persona]?.tagline}.
 You are giving a heartfelt, powerful, 3-paragraph motivational pep talk dedicated directly to "${friendName}".
 Situation: ${situation || 'Need general motivation'}
 Friend's specific details: ${notes || 'Feeling challenged'}
 Guidelines:
-1. Address ${friendName} directly with high authenticity.
+1. Address ${friendName} directly with high authenticity and enthusiasm.
 2. Acknowledge what they are facing without minimizing their feelings.
-3. Deliver high-conviction proof of why they are capable, reminding them of their growth.
+3. Deliver high-conviction proof of why they are capable, reminding them of their grit and growth.
 4. End with an unforgettable punchy rallying cry.
 Keep it between 120-180 words, punchy and memorable.`;
 
@@ -92,10 +101,10 @@ Keep it between 120-180 words, punchy and memorable.`;
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${key}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.85,
         }),
@@ -107,12 +116,12 @@ Keep it between 120-180 words, punchy and memorable.`;
         if (content) return content.trim();
       }
     } catch (e) {
-      console.warn('API call failed, falling back to smart on-device generation', e);
+      console.warn('Live API call failed, seamlessly falling back to local procedural AI engine', e);
     }
   }
 
-  // Smart On-Device Procedural AI Synthesis Engine
-  await new Promise(r => setTimeout(r, 650)); // natural async feel
+  // Built-in On-Device Procedural AI Engine (Always Works!)
+  await new Promise(r => setTimeout(r, 600));
 
   const friend = friendName || 'Friend';
   const customContext = notes ? `regarding "${notes}"` : '';
@@ -149,9 +158,55 @@ Whatever resistance you're feeling right now ${customContext} is not evidence th
 Stop measuring yourself against an impossible standard of effortless perfection. Break this down: what is the single highest-leverage action you can take in the next 15 minutes? Execute that one thing. You have solved 100% of your hardest days so far, and you will navigate this one with flying colors.`;
 }
 
-// Cognitive Reframing Engine
-export async function reframeThought({ thought, friendName = 'Alex', apiKey = '' }) {
-  await new Promise(r => setTimeout(r, 700));
+// Cognitive Reframing Engine with optional LLM JSON generation
+export async function reframeThought({ thought, friendName = 'Alex', apiKey = '', apiEndpoint = '' }) {
+  const { key, endpoint, model } = getEffectiveKeyAndEndpoint(apiKey, apiEndpoint);
+
+  if (key) {
+    try {
+      const prompt = `You are an expert cognitive behavioral therapy (CBT) mindset coach analyzing an anxious developer/student's thought.
+Thought from ${friendName}: "${thought}"
+
+Return ONLY a valid JSON object with these exact keys:
+{
+  "distortion": "Name of cognitive distortion (e.g. Catastrophizing, Imposter Syndrome, All-or-Nothing Thinking, Mind Reading)",
+  "distortionDesc": "Brief 1-2 sentence explanation of why this thought is a trap",
+  "realityCheck": "The objective, grounded truth/evidence contradicting the trap",
+  "reframedThought": "An empowering, realistic reframe written in the first person for ${friendName}",
+  "microAction": "A simple 2-minute actionable physical or mental step they can do right now"
+}`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          response_format: { type: 'json_object' },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed.distortion && parsed.reframedThought) {
+            return parsed;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Live API reframe failed, using built-in CBT analysis', e);
+    }
+  }
+
+  // Built-in Cognitive Analyzer
+  await new Promise(r => setTimeout(r, 650));
 
   const t = thought.toLowerCase();
   let distortion = 'All-or-Nothing Thinking';
