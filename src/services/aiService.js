@@ -1,4 +1,4 @@
-// HypePal AI Intelligence Engine with Google Gemini & Multi-LLM Support
+// HypePal AI Intelligence Engine with Open-Source AI (Local Ollama / Open-Weights) + Cloud Fallback
 export const PERSONAS = {
   hype: {
     id: 'hype',
@@ -70,14 +70,17 @@ export const COGNITIVE_DISTORTIONS = [
   },
 ];
 
-// Helper to determine active credentials (.env vs browser override)
-export function resolveCredentials(customKey, customEndpoint, customModel) {
+// Helper to determine active credentials (Local Ollama / .env / Browser)
+export function resolveCredentials(customKey, customEndpoint, customModel, customProvider) {
   const envGeminiKey = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
   const envOpenAIKey = (import.meta.env.VITE_OPENAI_API_KEY || '').trim();
+  const envOllamaEndpoint = (import.meta.env.VITE_OLLAMA_ENDPOINT || 'http://localhost:11434').trim();
+  const envOllamaModel = (import.meta.env.VITE_OLLAMA_MODEL || 'llama3.2').trim();
+
+  const provider = customProvider || import.meta.env.VITE_AI_PROVIDER || (envGeminiKey ? 'gemini' : 'local');
 
   let geminiKey = '';
   let openaiKey = '';
-
   const activeKey = (customKey || '').trim();
 
   if (activeKey) {
@@ -92,13 +95,18 @@ export function resolveCredentials(customKey, customEndpoint, customModel) {
   }
 
   const geminiModel = (customModel || import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  const ollamaEndpoint = (customEndpoint || envOllamaEndpoint).trim();
+  const ollamaModel = (customModel || envOllamaModel).trim();
   const openaiEndpoint = (customEndpoint || import.meta.env.VITE_AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions').trim();
   const openaiModel = (import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini').trim();
 
   return {
+    provider,
     geminiKey,
     openaiKey,
     geminiModel,
+    ollamaEndpoint,
+    ollamaModel,
     openaiEndpoint,
     openaiModel,
     hasEnvGemini: Boolean(envGeminiKey),
@@ -106,9 +114,33 @@ export function resolveCredentials(customKey, customEndpoint, customModel) {
   };
 }
 
+// Open-Source Local Ollama inference (100% private, no internet needed, $0 cost)
+async function callOllama({ endpoint, model, prompt, isJson = false }) {
+  try {
+    const url = `${endpoint.replace(/\/$/, '')}/api/generate`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: model || 'llama3.2',
+        prompt,
+        stream: false,
+        format: isJson ? 'json' : undefined,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.response) return data.response.trim();
+    }
+  } catch (err) {
+    console.warn('Local Ollama call failed (ensure Ollama is running):', err);
+  }
+  return null;
+}
+
 // Google Gemini API caller with automatic graceful cascade
 async function callGemini({ apiKey, prompt, isJson = false, model }) {
-  // First try the user's requested model, then standard models if model name varies
   const modelsToTry = Array.from(new Set([
     model,
     'gemini-2.5-flash',
@@ -142,9 +174,6 @@ async function callGemini({ apiKey, prompt, isJson = false, model }) {
         const data = await res.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) return text.trim();
-      } else {
-        const errData = await res.text();
-        console.warn(`Gemini model ${m} returned ${res.status}:`, errData);
       }
     } catch (err) {
       console.warn(`Gemini model ${m} network call error:`, err);
@@ -153,9 +182,9 @@ async function callGemini({ apiKey, prompt, isJson = false, model }) {
   return null;
 }
 
-// Generate Hype Speech using Gemini or OpenAI or Procedural fallback
-export async function generateHypeSpeech({ friendName = 'Alex', persona = 'hype', situation = '', notes = '', apiKey = '', apiEndpoint = '', model = '' }) {
-  const { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel } = resolveCredentials(apiKey, apiEndpoint, model);
+// Generate Hype Speech using Open-Source Local AI, Gemini, or Offline Procedural
+export async function generateHypeSpeech({ friendName = 'Alex', persona = 'hype', situation = '', notes = '', apiKey = '', apiEndpoint = '', model = '', provider = '' }) {
+  const creds = resolveCredentials(apiKey, apiEndpoint, model, provider);
 
   const prompt = `You are HypePal AI, speaking in the persona of "${PERSONAS[persona]?.name || 'Hype Beast'}".
 Your tone: ${PERSONAS[persona]?.tagline}.
@@ -169,13 +198,24 @@ Guidelines:
 4. End with an unforgettable punchy rallying cry.
 Keep it between 120-180 words, punchy and memorable.`;
 
-  // 1. Try Gemini if Gemini key exists
-  if (geminiKey) {
+  // 1. If provider is local Ollama (Open-Source AI)
+  if (creds.provider === 'ollama') {
+    const text = await callOllama({
+      endpoint: creds.ollamaEndpoint,
+      model: creds.ollamaModel,
+      prompt,
+      isJson: false,
+    });
+    if (text) return text;
+  }
+
+  // 2. Try Gemini if Gemini key exists
+  if (creds.geminiKey) {
     try {
       const responseText = await callGemini({
-        apiKey: geminiKey,
+        apiKey: creds.geminiKey,
         prompt,
-        model: geminiModel,
+        model: creds.geminiModel,
         isJson: false,
       });
       if (responseText) return responseText;
@@ -184,17 +224,17 @@ Keep it between 120-180 words, punchy and memorable.`;
     }
   }
 
-  // 2. Try OpenAI/Groq if OpenAI key exists
-  if (openaiKey) {
+  // 3. Try OpenAI/Groq if OpenAI key exists
+  if (creds.openaiKey) {
     try {
-      const response = await fetch(openaiEndpoint, {
+      const response = await fetch(creds.openaiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiKey}`,
+          'Authorization': `Bearer ${creds.openaiKey}`,
         },
         body: JSON.stringify({
-          model: openaiModel,
+          model: creds.openaiModel,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.85,
         }),
@@ -210,7 +250,7 @@ Keep it between 120-180 words, punchy and memorable.`;
     }
   }
 
-  // 3. Built-in On-Device Procedural AI Engine (Always Works!)
+  // 4. Built-in On-Device Procedural AI Engine (Always Works!)
   await new Promise(r => setTimeout(r, 600));
 
   const friend = friendName || 'Friend';
@@ -248,9 +288,9 @@ Whatever resistance you're feeling right now ${customContext} is not evidence th
 Stop measuring yourself against an impossible standard of effortless perfection. Break this down: what is the single highest-leverage action you can take in the next 15 minutes? Execute that one thing. You have solved 100% of your hardest days so far, and you will navigate this one with flying colors.`;
 }
 
-// Cognitive Reframing Engine with Gemini / OpenAI / Built-in CBT
-export async function reframeThought({ thought, friendName = 'Alex', apiKey = '', apiEndpoint = '', model = '' }) {
-  const { geminiKey, openaiKey, geminiModel, openaiEndpoint, openaiModel } = resolveCredentials(apiKey, apiEndpoint, model);
+// Cognitive Reframing Engine with Open-Source AI / Gemini / Built-in
+export async function reframeThought({ thought, friendName = 'Alex', apiKey = '', apiEndpoint = '', model = '', provider = '' }) {
+  const creds = resolveCredentials(apiKey, apiEndpoint, model, provider);
 
   const prompt = `You are an expert cognitive behavioral therapy (CBT) mindset coach analyzing an anxious developer/student's thought.
 Thought from ${friendName}: "${thought}"
@@ -264,13 +304,34 @@ Return ONLY a valid JSON object with these exact keys:
   "microAction": "A simple 2-minute actionable physical or mental step they can do right now"
 }`;
 
-  // 1. Try Gemini
-  if (geminiKey) {
+  // 1. Try Local Ollama (Open-Source AI)
+  if (creds.provider === 'ollama') {
+    const text = await callOllama({
+      endpoint: creds.ollamaEndpoint,
+      model: creds.ollamaModel,
+      prompt,
+      isJson: true,
+    });
+    if (text) {
+      try {
+        const cleaned = text.replace(/^```json/i, '').replace(/```$/i, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed.distortion && parsed.reframedThought) {
+          return parsed;
+        }
+      } catch (err) {
+        console.warn('Ollama JSON parse error:', err);
+      }
+    }
+  }
+
+  // 2. Try Gemini
+  if (creds.geminiKey) {
     try {
       const text = await callGemini({
-        apiKey: geminiKey,
+        apiKey: creds.geminiKey,
         prompt,
-        model: geminiModel,
+        model: creds.geminiModel,
         isJson: true,
       });
       if (text) {
@@ -285,17 +346,17 @@ Return ONLY a valid JSON object with these exact keys:
     }
   }
 
-  // 2. Try OpenAI
-  if (openaiKey) {
+  // 3. Try OpenAI
+  if (creds.openaiKey) {
     try {
-      const response = await fetch(openaiEndpoint, {
+      const response = await fetch(creds.openaiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiKey}`,
+          'Authorization': `Bearer ${creds.openaiKey}`,
         },
         body: JSON.stringify({
-          model: openaiModel,
+          model: creds.openaiModel,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.7,
           response_format: { type: 'json_object' },
@@ -317,7 +378,7 @@ Return ONLY a valid JSON object with these exact keys:
     }
   }
 
-  // 3. Built-in Cognitive Analyzer
+  // 4. Built-in Cognitive Analyzer
   await new Promise(r => setTimeout(r, 650));
 
   const t = thought.toLowerCase();
