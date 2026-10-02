@@ -13,7 +13,7 @@
 ---
 
 <p align="center">
-  <img src="docs/screenshots/01-hype-engine-beast.png" alt="HypePal AI Main Dashboard" width="100%" />
+  <img src="public/screenshots/01-hype-engine-beast.png" alt="HypePal AI Main Dashboard" width="100%" />
 </p>
 
 ---
@@ -43,7 +43,7 @@ Choose from 4 distinct AI personalities tailored to what your friend is facing r
 - 🎯 **Strategic Mentor:** High-agency tactical perspective and evidence-based framing.
 
 <p align="center">
-  <img src="docs/screenshots/03-empathetic-bestie.png" alt="Empathetic Bestie Cheer Mode" width="100%" />
+  <img src="public/screenshots/03-empathetic-bestie.png" alt="Empathetic Bestie Cheer Mode" width="100%" />
 </p>
 
 - **Web Speech API Read-Aloud:** Browser-native Text-to-Speech (TTS) with an animated real-time audio waveform visualizer.
@@ -58,7 +58,7 @@ Grounded in Cognitive Behavioral Therapy (CBT) principles to deconstruct negativ
 - **2-Minute Dopamine Micro-Action:** An immediate, low-friction action to build real momentum.
 
 <p align="center">
-  <img src="docs/screenshots/04-cbt-cognitive-reframe.png" alt="CBT Cognitive Distortion Buster" width="100%" />
+  <img src="public/screenshots/04-cbt-cognitive-reframe.png" alt="CBT Cognitive Distortion Buster" width="100%" />
 </p>
 
 ---
@@ -70,7 +70,7 @@ An undeniable evidence locker against imposter syndrome:
 - **1-Click Markdown Export:** Export all wins into a clean markdown brag sheet ready for performance reviews or 1-on-1s.
 
 <p align="center">
-  <img src="docs/screenshots/05-victory-vault.png" alt="Alex's Victory Vault" width="100%" />
+  <img src="public/screenshots/05-victory-vault.png" alt="Alex's Victory Vault" width="100%" />
 </p>
 
 ---
@@ -82,7 +82,7 @@ Craft and deliver high-energy, personalized digital postcards to text, Slack, or
 - **Instant Live Preview:** Real-time preview card with glowing gradients and one-click clipboard copy.
 
 <p align="center">
-  <img src="docs/screenshots/06-digital-hype-card.png" alt="Send a Digital Hype Card" width="100%" />
+  <img src="public/screenshots/06-digital-hype-card.png" alt="Send a Digital Hype Card" width="100%" />
 </p>
 
 ---
@@ -95,7 +95,7 @@ Switch seamlessly between cloud acceleration and complete local privacy:
 - **Built-in Procedural Offline Engine:** Automatically guarantees the app never crashes even without internet connection or API keys.
 
 <p align="center">
-  <img src="docs/screenshots/02-ai-model-settings.png" alt="AI Provider & Model Settings" width="100%" />
+  <img src="public/screenshots/02-ai-model-settings.png" alt="AI Provider & Model Settings" width="100%" />
 </p>
 
 ---
