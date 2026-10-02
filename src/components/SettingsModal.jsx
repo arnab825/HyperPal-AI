@@ -7,14 +7,14 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
 
   const [provider, setProvider] = useState(settings.provider || creds.provider || 'gemini');
   const [apiKey, setApiKey] = useState(settings.apiKey || '');
-  const [model, setModel] = useState(settings.model || creds.activeModel);
+  const [model, setModel] = useState(settings.model || creds.activeModel || 'gemini-3.8-flash');
   const [isCustomModelInput, setIsCustomModelInput] = useState(false);
   const [soundEffects, setSoundEffects] = useState(settings.soundEffects !== false);
   const [saved, setSaved] = useState(false);
 
-  // Dynamic Gemini models list with .env model always included at the top
+  // Dynamic Gemini models list with .env model included
   const geminiList = useMemo(() => {
-    const envModel = (import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.6-flash').trim();
+    const envModel = (import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.8-flash').trim();
     const existing = GEMINI_MODELS.find(m => m.id === envModel);
     if (!existing) {
       return [{ id: envModel, name: `${envModel} (From .env)`, tag: 'Active' }, ...GEMINI_MODELS];
@@ -31,7 +31,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
       const defaultGroq = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
       setModel(defaultGroq);
     } else if (newProvider === 'gemini') {
-      const defaultGemini = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.6-flash';
+      const defaultGemini = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.8-flash';
       setModel(defaultGemini);
     } else if (newProvider === 'ollama') {
       setModel('llama3.2');
@@ -75,8 +75,8 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
 
         {/* Modal Header */}
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-500 to-purple-600 text-white shrink-0 shadow-lg shadow-orange-500/20">
-            <Cpu className="w-5 h-5" />
+          <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-600 to-purple-600 text-white shrink-0 shadow-lg shadow-blue-500/20">
+            <Sparkles className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-base font-extrabold text-white font-['Outfit']">AI Provider & Model Settings</h3>
@@ -90,12 +90,12 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
           {creds.isBrowserOverride ? (
             <span className="flex items-center gap-1.5 text-blue-400 font-bold truncate">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Browser Custom Key ({model || creds.activeModel})</span>
+              <span className="truncate">Browser Custom Key ({model})</span>
             </span>
           ) : creds.hasEnvGemini ? (
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold truncate">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Default Free Gemini ({model || creds.activeModel})</span>
+              <span className="truncate">Default Free Gemini ({model})</span>
             </span>
           ) : (
             <span className="text-amber-400 font-medium">Built-in Offline Engine</span>
@@ -178,8 +178,8 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                 type="text"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
-                placeholder="e.g. gemini-3.6-flash, deepseek-r1-distill-llama-70b"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-amber-400 font-mono"
+                placeholder="e.g. gemini-3.8-flash, llama-3.3-70b-versatile"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-blue-400 font-mono"
               />
             ) : provider === 'groq' ? (
               <select
@@ -195,7 +195,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
               </select>
             ) : provider === 'gemini' ? (
               <select
-                value={model || geminiList[0]?.id || 'gemini-3.6-flash'}
+                value={model || geminiList[0]?.id || 'gemini-3.8-flash'}
                 onChange={(e) => setModel(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-blue-400"
               >
@@ -244,7 +244,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                     ? 'gsk_...'
                     : 'AIzaSy... or sk-...'
                 }
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-amber-400 font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-blue-400 font-mono"
               />
               <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500">
                 <span className="flex items-center gap-1">
@@ -270,7 +270,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
               type="checkbox"
               checked={soundEffects}
               onChange={(e) => setSoundEffects(e.target.checked)}
-              className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-900 border-slate-700 cursor-pointer"
+              className="w-4 h-4 rounded text-blue-500 focus:ring-blue-400 bg-slate-900 border-slate-700 cursor-pointer"
             />
           </div>
 
@@ -285,9 +285,9 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-blue-500/20 cursor-pointer"
             >
-              {saved ? <Check className="w-3.5 h-3.5 text-slate-950" /> : null}
+              {saved ? <Check className="w-3.5 h-3.5 text-white" /> : null}
               <span>{saved ? 'Saved!' : 'Save Preferences'}</span>
             </button>
           </div>
