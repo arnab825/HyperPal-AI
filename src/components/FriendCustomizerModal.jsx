@@ -20,21 +20,21 @@ export default function FriendCustomizerModal({ isOpen, onClose, friend, onUpdat
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-md rounded-3xl glass-panel border border-slate-700/80 p-6 sm:p-8 space-y-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl glass-panel border border-slate-700/80 p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-2xl relative">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="absolute top-4 sm:top-5 right-4 sm:right-5 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
             <Heart className="w-5 h-5 text-pink-400 fill-pink-400/30" />
           </div>
           <div>
-            <h3 className="text-base font-extrabold text-white font-['Outfit']">Who are you building for?</h3>
+            <h3 className="text-sm sm:text-base font-extrabold text-white font-['Outfit']">Who are you building for?</h3>
             <p className="text-xs text-slate-400">Personalize HypePal for your specific friend</p>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function FriendCustomizerModal({ isOpen, onClose, friend, onUpdat
               Their Current Biggest Challenge
             </label>
             <textarea
-              rows={2}
+              rows={3}
               value={challenge}
               onChange={(e) => setChallenge(e.target.value)}
               placeholder="e.g. Struggling with async state bugs & feeling stressed before sprint demo"

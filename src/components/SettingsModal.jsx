@@ -36,37 +36,37 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-md rounded-3xl glass-panel border border-slate-700/80 p-6 sm:p-8 space-y-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl glass-panel border border-slate-700/80 p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-2xl relative">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+          className="absolute top-4 sm:top-5 right-4 sm:right-5 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 border border-blue-400/30 text-white">
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 border border-blue-400/30 text-white shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-extrabold text-white font-['Outfit']">Google Gemini & AI Settings</h3>
+            <h3 className="text-sm sm:text-base font-extrabold text-white font-['Outfit']">Google Gemini & AI Settings</h3>
             <p className="text-xs text-slate-400">Configured with <strong>{creds.geminiModel}</strong></p>
           </div>
         </div>
 
         {/* Status indicator */}
-        <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs">
-          <span className="text-slate-400">Current AI Engine:</span>
+        <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs gap-2">
+          <span className="text-slate-400 shrink-0">Engine:</span>
           {creds.isBrowserOverride ? (
-            <span className="flex items-center gap-1.5 text-blue-400 font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Browser Custom Key (Active)</span>
+            <span className="flex items-center gap-1.5 text-blue-400 font-bold truncate">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Browser Custom Key (Active)</span>
             </span>
           ) : creds.hasEnvGemini ? (
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Default .env Key (Active)</span>
+            <span className="flex items-center gap-1.5 text-emerald-400 font-bold truncate">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Default .env Key (Active)</span>
             </span>
           ) : (
             <span className="text-amber-400 font-medium">Built-in Offline Engine</span>
@@ -98,7 +98,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
             />
             <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500">
               <span className="flex items-center gap-1">
-                <Shield className="w-3 h-3 text-emerald-400" /> Stored locally in this browser only.
+                <Shield className="w-3 h-3 text-emerald-400 shrink-0" /> Local to this browser only.
               </span>
               {apiKey && (
                 <button
@@ -106,7 +106,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                   onClick={handleClearCustomKey}
                   className="text-rose-400 hover:underline cursor-pointer"
                 >
-                  Reset to default
+                  Reset
                 </button>
               )}
             </div>
@@ -134,7 +134,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
               type="checkbox"
               checked={soundEffects}
               onChange={(e) => setSoundEffects(e.target.checked)}
-              className="w-4 h-4 rounded text-blue-500 focus:ring-blue-400 bg-slate-900 border-slate-700"
+              className="w-4 h-4 rounded text-blue-500 focus:ring-blue-400 bg-slate-900 border-slate-700 cursor-pointer"
             />
           </div>
 

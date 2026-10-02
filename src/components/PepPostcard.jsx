@@ -44,27 +44,27 @@ From: ${signature}
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn">
       {/* Header */}
-      <div className="rounded-3xl p-6 sm:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-pink-950/20 to-slate-950/40 relative overflow-hidden">
+      <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-pink-950/20 to-slate-950/40 relative overflow-hidden">
         <div className="max-w-2xl space-y-2 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-400/10 border border-pink-400/20 text-pink-300 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-pink-400/10 border border-pink-400/20 text-pink-300 text-[11px] sm:text-xs font-semibold">
             <Heart className="w-3.5 h-3.5 text-pink-400" />
             <span>Direct Friend Delivery</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-['Outfit']">
+          <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight font-['Outfit']">
             Send a Digital Hype Card 💌
           </h2>
-          <p className="text-slate-300 text-sm leading-relaxed">
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
             Craft a personalized high-energy postcard to text, Slack, or DM to {friend.name}. One thoughtful message can completely flip someone's day around.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
         {/* Left: Customizer controls */}
-        <div className="lg:col-span-5 space-y-5">
-          <div className="p-6 rounded-3xl glass-card space-y-4">
+        <div className="lg:col-span-5 space-y-4">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl glass-card space-y-4">
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
                 Card Theme Style
@@ -80,19 +80,19 @@ From: ${signature}
                         : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <span className={`w-3.5 h-3.5 rounded-full bg-gradient-to-br ${t.bg}`} />
-                    <span>{t.name}</span>
+                    <span className={`w-3 h-3 rounded-full bg-gradient-to-br shrink-0 ${t.bg}`} />
+                    <span className="truncate">{t.name}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                 Message Content
               </label>
               <textarea
-                rows={4}
+                rows={3}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-pink-400 resize-none leading-relaxed"
@@ -106,7 +106,7 @@ From: ${signature}
                   <button
                     key={i}
                     onClick={() => setMessage(msg)}
-                    className="text-left text-xs p-2 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-800/60 text-slate-300 transition-all truncate"
+                    className="text-left text-xs p-2 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-800/60 text-slate-300 transition-all line-clamp-1 cursor-pointer"
                   >
                     "{msg}"
                   </button>
@@ -128,50 +128,50 @@ From: ${signature}
 
             <button
               onClick={handleCopyCard}
-              className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+              className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
             >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>{copied ? 'Copied Card Text!' : `Copy Card to Send to ${friend.name}`}</span>
+              {copied ? <Check className="w-4 h-4 shrink-0" /> : <Copy className="w-4 h-4 shrink-0" />}
+              <span className="truncate">{copied ? 'Copied Card Text!' : `Copy Card for ${friend.name}`}</span>
             </button>
           </div>
         </div>
 
         {/* Right: Live Card Visualizer */}
-        <div className="lg:col-span-7 flex justify-center">
-          <div className={`w-full max-w-lg rounded-3xl p-1 bg-gradient-to-br ${theme.bg} shadow-2xl shadow-purple-950/50 relative overflow-hidden transition-all duration-300`}>
-            <div className="rounded-[22px] bg-slate-950/90 backdrop-blur-xl p-8 sm:p-10 flex flex-col justify-between min-h-[380px] space-y-8 relative">
-              {/* Decorative elements */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">⚡</span>
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Special Delivery</h3>
-                    <p className="text-sm font-extrabold text-white">For: {friend.name}</p>
+        <div className="lg:col-span-7 flex justify-center w-full">
+          <div className={`w-full max-w-lg rounded-2xl sm:rounded-3xl p-1 bg-gradient-to-br ${theme.bg} shadow-2xl shadow-purple-950/50 relative overflow-hidden transition-all duration-300`}>
+            <div className="rounded-[18px] sm:rounded-[22px] bg-slate-950/90 backdrop-blur-xl p-5 sm:p-8 md:p-10 flex flex-col justify-between min-h-[300px] sm:min-h-[360px] space-y-6 relative">
+              {/* Card top */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xl sm:text-2xl shrink-0">⚡</span>
+                  <div className="min-w-0">
+                    <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">Special Delivery</h3>
+                    <p className="text-xs sm:text-sm font-extrabold text-white truncate">For: {friend.name}</p>
                   </div>
                 </div>
 
-                <div className={`px-2.5 py-1 rounded-full border ${theme.border} bg-slate-900/80 text-[10px] font-black uppercase tracking-wider ${theme.text}`}>
+                <div className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border ${theme.border} bg-slate-900/80 text-[9px] sm:text-[10px] font-black uppercase tracking-wider ${theme.text} shrink-0`}>
                   Official Hype
                 </div>
               </div>
 
               {/* Message quote */}
-              <div className="relative my-auto">
-                <span className="text-5xl font-serif text-slate-700/40 absolute -top-6 -left-3 select-none">“</span>
-                <p className="text-base sm:text-lg text-slate-100 font-medium leading-relaxed italic z-10 relative">
+              <div className="relative my-auto py-2">
+                <span className="text-4xl sm:text-5xl font-serif text-slate-700/40 absolute -top-5 sm:-top-6 -left-2 sm:-left-3 select-none">“</span>
+                <p className="text-sm sm:text-base md:text-lg text-slate-100 font-medium leading-relaxed italic z-10 relative">
                   {message}
                 </p>
-                <span className="text-5xl font-serif text-slate-700/40 absolute -bottom-10 right-2 select-none">”</span>
+                <span className="text-4xl sm:text-5xl font-serif text-slate-700/40 absolute -bottom-8 sm:-bottom-10 right-2 select-none">”</span>
               </div>
 
               {/* Footer / Signature */}
-              <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Sent with heart from:</span>
-                  <span className="text-xs font-bold text-slate-200">{signature}</span>
+              <div className="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block">Sent with heart from:</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-200 truncate block">{signature}</span>
                 </div>
-                <div className="text-[10px] text-slate-500 font-mono">
-                  #BuildForAFriend • 2026
+                <div className="text-[9px] sm:text-[10px] text-slate-500 font-mono shrink-0">
+                  #BuildForAFriend
                 </div>
               </div>
             </div>

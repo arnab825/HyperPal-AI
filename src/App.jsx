@@ -108,10 +108,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-['Plus_Jakarta_Sans'] selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-['Plus_Jakarta_Sans'] selection:bg-amber-400 selection:text-slate-950 overflow-x-hidden">
       {/* Background ambient glowing orbs */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none" />
-      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[128px] pointer-events-none" />
+      <div className="fixed top-0 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-purple-600/10 rounded-full blur-[100px] sm:blur-[128px] pointer-events-none" />
+      <div className="fixed bottom-0 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-amber-500/10 rounded-full blur-[100px] sm:blur-[128px] pointer-events-none" />
 
       {/* Navigation */}
       <Navbar
@@ -123,8 +123,8 @@ export default function App() {
         vaultCount={wins.length}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 relative z-10">
+      {/* Main Content Area with mobile bottom padding */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 pb-28 md:pb-12 relative z-10">
         {activeTab === 'hype' && (
           <HypeGenerator
             friend={friend}
@@ -172,9 +172,9 @@ export default function App() {
         onUpdateSettings={setSettings}
       />
 
-      {/* Footer */}
-      <footer className="w-full border-t border-slate-800/80 bg-slate-950/70 py-8 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 relative z-10">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Footer with mobile offset */}
+      <footer className="w-full border-t border-slate-800/80 bg-slate-950/70 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 relative z-10 mb-16 md:mb-0">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <span className="text-amber-400 font-bold">⚡ HypePal AI</span>
             <span>—</span>

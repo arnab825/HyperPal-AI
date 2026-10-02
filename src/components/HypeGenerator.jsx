@@ -34,6 +34,7 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
         notes: customNotes,
         apiKey: settings?.apiKey,
         apiEndpoint: settings?.apiEndpoint,
+        model: settings?.model,
       });
 
       setHypeSpeech(generated);
@@ -85,37 +86,37 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn">
       {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-900/90 to-purple-950/30">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-5 sm:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-900/90 to-purple-950/30">
         <div className="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -bottom-12 w-64 h-64 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-xs font-semibold">
+        <div className="relative z-10 max-w-3xl space-y-2 sm:space-y-3">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-[11px] sm:text-xs font-semibold">
             <Flame className="w-3.5 h-3.5" />
             <span>Power Up {friend.name}'s Mindset</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-['Outfit']">
+          <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight font-['Outfit'] leading-tight">
             Turn Doubts into Pure Momentum ⚡
           </h2>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-300 text-xs sm:text-sm md:text-base leading-relaxed">
             Everyone needs a dedicated hype squad. Select an AI personality, pick what {friend.name} is facing right now, and let HypePal craft an unforgettable boost.
           </p>
         </div>
       </div>
 
       {/* Persona Selection */}
-      <div className="space-y-3">
+      <div className="space-y-2.5 sm:space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>1. Choose the Hype Persona</span>
           </label>
-          <span className="text-xs text-slate-500">Tailored voice & tone</span>
+          <span className="text-[11px] text-slate-500 hidden sm:inline">Tailored voice & tone</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {Object.values(PERSONAS).map((p) => {
             const isSelected = selectedPersona === p.id;
             return (
@@ -126,9 +127,9 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
                   if (isSpeaking) speechService.stop();
                   setIsSpeaking(false);
                 }}
-                className={`relative p-4 rounded-2xl text-left transition-all cursor-pointer flex flex-col justify-between ${
+                className={`relative p-3 sm:p-4 rounded-xl sm:rounded-2xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                   isSelected
-                    ? `glass-panel border-2 ${p.borderColor} shadow-lg shadow-purple-500/10 scale-[1.02]`
+                    ? `glass-panel border-2 ${p.borderColor} shadow-lg shadow-purple-500/10 scale-[1.01]`
                     : 'glass-card hover:border-slate-700/80 hover:bg-slate-900/60'
                 }`}
                 style={{
@@ -136,18 +137,18 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
                 }}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                    <span className="text-xl sm:text-2xl p-1.5 sm:p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
                       {p.avatar}
                     </span>
                     {isSelected && (
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 border ${p.borderColor} ${p.accentColor}`}>
+                      <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-800 border ${p.borderColor} ${p.accentColor}`}>
                         Active
                       </span>
                     )}
                   </div>
-                  <h3 className="text-sm font-bold text-white">{p.name}</h3>
-                  <p className="text-xs text-slate-400 mt-1 leading-snug">{p.tagline}</p>
+                  <h3 className="text-xs sm:text-sm font-bold text-white truncate">{p.name}</h3>
+                  <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 leading-snug line-clamp-2">{p.tagline}</p>
                 </div>
               </button>
             );
@@ -156,28 +157,28 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
       </div>
 
       {/* Situation & Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
         {/* Left: Quick chips & context */}
         <div className="lg:col-span-1 space-y-4">
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
               2. What is {friend.name} facing?
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {SITUATIONS.map((s) => {
                 const isSelected = selectedSituation === s.id;
                 return (
                   <button
                     key={s.id}
                     onClick={() => setSelectedSituation(s.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
                         : 'bg-slate-900/80 text-slate-300 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/80'
                     }`}
                   >
                     <span>{s.icon}</span>
-                    <span>{s.label}</span>
+                    <span className="text-[11px] sm:text-xs">{s.label}</span>
                   </button>
                 );
               })}
@@ -185,8 +186,8 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              3. Specific details or inside jokes
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+              3. Specific details (optional)
             </label>
             <textarea
               rows={3}
@@ -200,16 +201,16 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-purple-600 text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-purple-600 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isGenerating ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                <RefreshCw className="w-4 h-4 animate-spin text-slate-950 shrink-0" />
                 <span>Brewing High-Voltage Hype...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 text-slate-950 fill-slate-950" />
+                <Sparkles className="w-4 h-4 text-slate-950 fill-slate-950 shrink-0" />
                 <span>Ignite Pep-Talk for {friend.name}</span>
               </>
             )}
@@ -218,21 +219,21 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
 
         {/* Right: The Speech Output Card */}
         <div className="lg:col-span-2">
-          <div className="h-full flex flex-col rounded-3xl glass-panel border border-slate-800/80 overflow-hidden shadow-2xl relative">
+          <div className="h-full flex flex-col rounded-2xl sm:rounded-3xl glass-panel border border-slate-800/80 overflow-hidden shadow-2xl relative">
             {/* Top card bar */}
-            <div className="px-6 py-4 border-b border-slate-800/80 bg-slate-950/40 flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">{activePersonaObj.avatar}</span>
-                <div>
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800/80 bg-slate-950/40 flex items-center justify-between flex-wrap gap-2.5">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                <span className="text-xl shrink-0">{activePersonaObj.avatar}</span>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider truncate">
                     {activePersonaObj.name}'s Dispatch
                   </h4>
-                  <span className="text-[10px] text-slate-400">Dedicated to {friend.name}</span>
+                  <span className="text-[10px] text-slate-400 truncate block">Dedicated to {friend.name}</span>
                 </div>
               </div>
 
-              {/* Audio and Waveform status */}
-              <div className="flex items-center gap-2">
+              {/* Audio Controls */}
+              <div className="flex items-center gap-2 shrink-0">
                 <AudioWaveVisualizer isPlaying={isSpeaking} accentColor="bg-amber-400" />
                 <button
                   onClick={handleToggleVoice}
@@ -245,12 +246,12 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
                 >
                   {isSpeaking ? (
                     <>
-                      <VolumeX className="w-3.5 h-3.5 text-rose-400" />
-                      <span>Stop Voice</span>
+                      <VolumeX className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>Stop</span>
                     </>
                   ) : (
                     <>
-                      <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                      <Volume2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span>Read Aloud</span>
                     </>
                   )}
@@ -259,13 +260,13 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
             </div>
 
             {/* Speech Body */}
-            <div className="p-6 sm:p-8 flex-1 flex flex-col justify-between space-y-6 bg-gradient-to-b from-transparent via-slate-900/20 to-slate-950/50">
-              <blockquote className="text-sm sm:text-base text-slate-200 leading-relaxed font-medium whitespace-pre-line tracking-wide font-['Plus_Jakarta_Sans']">
+            <div className="p-4 sm:p-6 md:p-8 flex-1 flex flex-col justify-between space-y-5 sm:space-y-6 bg-gradient-to-b from-transparent via-slate-900/20 to-slate-950/50">
+              <blockquote className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed font-medium whitespace-pre-line tracking-wide font-['Plus_Jakarta_Sans']">
                 {hypeSpeech}
               </blockquote>
 
               {/* Card Footer Actions */}
-              <div className="pt-4 border-t border-slate-800/60 flex items-center justify-between flex-wrap gap-3">
+              <div className="pt-3.5 border-t border-slate-800/60 flex items-center justify-between flex-wrap gap-2.5">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleCopy}
@@ -279,7 +280,7 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Copy Speech</span>
+                        <span>Copy</span>
                       </>
                     )}
                   </button>
@@ -294,12 +295,12 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
                     }`}
                   >
                     <BookmarkPlus className={`w-3.5 h-3.5 ${saved ? 'text-emerald-400' : 'text-slate-400'}`} />
-                    <span>{saved ? 'Saved in Vault' : 'Save in Vault'}</span>
+                    <span>{saved ? 'Saved' : 'Save Win'}</span>
                   </button>
                 </div>
 
-                <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                  <span>Tip: Click 'Read Aloud' to test browser speech!</span>
+                <div className="text-[10px] sm:text-[11px] text-slate-500">
+                  <span>AI Powered Hype</span>
                 </div>
               </div>
             </div>
