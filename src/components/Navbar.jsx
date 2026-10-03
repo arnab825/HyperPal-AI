@@ -43,6 +43,7 @@ export default function Navbar({
   onOpenFriendModal, 
   onOpenSettings,
   vaultCount = 0,
+  streakCount,
   settings,
   onUpdateSettings,
   onUpdateFriend,
@@ -222,9 +223,10 @@ export default function Navbar({
 
                   {/* Current Challenge Quote */}
                   {friend.challenge && (
-                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80 text-[11px] text-slate-300 italic">
-                      <span className="text-slate-500 font-serif text-sm mr-1">“</span>
-                      <span>{friend.challenge}</span>
+                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80 text-[11px] text-slate-300 italic flex items-start">
+                      <span className="text-slate-500 font-serif text-sm mr-1 shrink-0 select-none">“</span>
+                      <span className="flex-1">{friend.challenge}</span>
+                      <span className="text-slate-500 font-serif text-sm ml-1 shrink-0 select-none">”</span>
                     </div>
                   )}
 
@@ -236,7 +238,7 @@ export default function Navbar({
                     </div>
                     <div>
                       <span className="text-[9px] uppercase font-bold text-slate-500 block">Streak</span>
-                      <span className="text-sm font-extrabold text-orange-400">{Math.max(vaultCount, 1)}d 🔥</span>
+                      <span className="text-sm font-extrabold text-orange-400">{(streakCount !== undefined ? streakCount : Math.max(vaultCount, 1))}d 🔥</span>
                     </div>
                     <div>
                       <span className="text-[9px] uppercase font-bold text-slate-500 block">Armor</span>

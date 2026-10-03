@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HypeGenerator from './components/HypeGenerator';
 import CognitiveReframer from './components/CognitiveReframer';
-import VictoryVault from './components/VictoryVault';
+import VictoryVault, { calculateStreakStats } from './components/VictoryVault';
 import PepPostcard from './components/PepPostcard';
 import FriendCustomizerModal from './components/FriendCustomizerModal';
 import SettingsModal from './components/SettingsModal';
@@ -163,6 +163,7 @@ export default function App() {
         onOpenFriendModal={() => setIsFriendModalOpen(true)}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         vaultCount={wins.length}
+        streakCount={(() => { const s = calculateStreakStats(wins); return s.currentStreak > 0 ? s.currentStreak : s.longestStreak; })()}
         settings={settings}
         onUpdateSettings={setSettings}
         onUpdateFriend={setFriend}
