@@ -9,6 +9,7 @@ import SettingsModal from './components/SettingsModal';
 import OpenAiExplainerModal from './components/OpenAiExplainerModal';
 import FriendStoryModal from './components/FriendStoryModal';
 import { Heart, Sparkles, Code2 } from 'lucide-react';
+import { soundService } from './services/soundService';
 
 const INITIAL_WINS = [
   {

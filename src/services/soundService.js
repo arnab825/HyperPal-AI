@@ -1,7 +1,18 @@
 class SoundService {
   constructor() {
     this.ctx = null;
-    this.enabled = true;
+    // Read initial state from localStorage so sound respects saved setting on page load
+    try {
+      const saved = typeof window !== 'undefined' && localStorage.getItem('hypepal_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.enabled = parsed.soundEffects !== false;
+      } else {
+        this.enabled = true;
+      }
+    } catch {
+      this.enabled = true;
+    }
   }
 
   init() {
