@@ -140,20 +140,8 @@ export default function Navbar({
             })}
           </nav>
 
-          {/* Right: Settings & Interactive Profile Dropdown (Modern Website Style) */}
+          {/* Right: Modern Profile Avatar Pill with Embedded Settings Dropdown */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Settings Gear Button */}
-            <button
-              onClick={() => {
-                soundService.playPop();
-                onOpenSettings();
-              }}
-              title="Settings & AI Provider"
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-slate-800/80 transition-all cursor-pointer hover:rotate-45"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-
             {/* Profile Avatar Pill / Dropdown Trigger */}
             <div className="relative" ref={profileDropdownRef}>
               <button
@@ -246,6 +234,26 @@ export default function Navbar({
 
                   {/* Action Menu Items */}
                   <div className="space-y-1 pt-1">
+                    {/* Settings & AI Configuration Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundService.playPop();
+                        setIsProfileOpen(false);
+                        onOpenSettings();
+                      }}
+                      className="w-full p-2.5 rounded-xl text-left text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800/80 flex items-center justify-between transition-all cursor-pointer group/set"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Settings className="w-3.5 h-3.5 text-amber-400 group-hover/set:rotate-45 transition-transform" />
+                        <span>AI Model & API Settings</span>
+                      </span>
+                      <span className="text-[10px] text-amber-300 font-mono bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span className="truncate max-w-[85px] capitalize">{settings?.provider || 'Gemini'}</span>
+                      </span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => {
@@ -256,7 +264,7 @@ export default function Navbar({
                       className="w-full p-2.5 rounded-xl text-left text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800/80 flex items-center justify-between transition-colors cursor-pointer"
                     >
                       <span className="flex items-center gap-2">
-                        <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                        <Edit3 className="w-3.5 h-3.5 text-purple-400" />
                         <span>Edit Friend Profile & Challenges</span>
                       </span>
                       <span className="text-[10px] text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded">edit</span>
