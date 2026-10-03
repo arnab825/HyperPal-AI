@@ -51,6 +51,34 @@ export default function Navbar({
   onOpenStoryModal
 }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const desktopNavRef = useRef(null);
+  const tabButtonRefs = useRef({});
+  const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0, opacity: 0 });
+
+  // Update sliding pill position smoothly whenever activeTab changes, vaultCount changes, or window resizes
+  useEffect(() => {
+    const updateSlider = () => {
+      const activeEl = tabButtonRefs.current[activeTab];
+      const navEl = desktopNavRef.current;
+      if (activeEl && navEl) {
+        const navRect = navEl.getBoundingClientRect();
+        const activeRect = activeEl.getBoundingClientRect();
+        setSliderStyle({
+          left: activeRect.left - navRect.left,
+          width: activeRect.width,
+          opacity: 1,
+        });
+      }
+    };
+
+    updateSlider();
+    const timer = setTimeout(updateSlider, 35);
+    window.addEventListener('resize', updateSlider);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateSlider);
+    };
+  }, [activeTab, vaultCount]);
   const profileDropdownRef = useRef(null);
 
   const navItems = [
@@ -130,25 +158,46 @@ export default function Navbar({
             </div>
           </div>
 
-          {/* Desktop Center Navigation Tabs */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/60">
+          {/* Desktop Center Navigation Tabs with Liquid Animated Sliding Indicator */}
+          <nav
+            ref={desktopNavRef}
+            className="hidden md:flex items-center gap-1 bg-[#0b1120]/90 p-1.5 rounded-2xl border border-slate-700/60 relative shadow-2xl backdrop-blur-2xl ring-1 ring-white/5"
+          >
+            {/* Smooth Liquid Premium Sliding Pill Indicator */}
+            <div
+              className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 border border-white/20 shadow-[0_4px_18px_-2px_rgba(245,158,11,0.5)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none overflow-hidden"
+              style={{
+                transform: `translateX(${sliderStyle.left}px)`,
+                width: `${sliderStyle.width}px`,
+                opacity: sliderStyle.opacity,
+              }}
+            >
+              {/* Subtle glass reflection highlight */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-black/10 pointer-events-none" />
+            </div>
+
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
+                  ref={(el) => (tabButtonRefs.current[item.id] = el)}
                   onClick={() => {
                     soundService.playPop();
                     setActiveTab(item.id);
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  className={`relative z-10 flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-extrabold tracking-wide transition-all duration-200 cursor-pointer select-none ${
                     isActive
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                      ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <Icon className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                    isActive 
+                      ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] scale-110' 
+                      : 'text-slate-400'
+                  }`} />
                   <span>{item.label}</span>
                 </button>
               );
@@ -400,7 +449,7 @@ export default function Navbar({
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation Bar */}
+      {/* Mobile Bottom Navigation Bar with Smooth Active Indicators */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800/80 px-2 py-1.5 flex items-center justify-around shadow-2xl">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -413,14 +462,17 @@ export default function Navbar({
                 setActiveTab(item.id);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold transition-all cursor-pointer min-w-[64px] ${
+              className={`relative flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold transition-all duration-200 cursor-pointer min-w-[64px] ${
                 isActive
-                  ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
+                  ? 'text-amber-400 bg-amber-500/15 border border-amber-500/30 shadow-md shadow-amber-500/10 scale-105'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400 scale-110' : 'text-slate-400'}`} />
+              <Icon className={`w-4 h-4 transition-transform duration-200 ${isActive ? 'text-amber-400 scale-110' : 'text-slate-400'}`} />
               <span className="truncate">{item.shortLabel}</span>
+              {isActive && (
+                <span className="absolute -top-1 w-6 h-0.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-fadeIn" />
+              )}
             </button>
           );
         })}

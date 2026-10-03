@@ -185,6 +185,7 @@ export default function App() {
 
       {/* Main Content Area with mobile bottom padding */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 pb-28 md:pb-12 relative">
+        <div key={activeTab} className="animate-tab-switch">
         {activeTab === 'hype' && (
           <HypeGenerator
             friend={friend}
@@ -232,6 +233,7 @@ export default function App() {
             settings={settings}
           />
         )}
+        </div>
       </main>
 
       {/* Global Modals */}
