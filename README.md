@@ -5,6 +5,7 @@
 [![React 19](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge)](./LICENSE)
+[![Architecture: Docs](https://img.shields.io/badge/Architecture-Deep--Dive-purple?style=for-the-badge&logo=diagramsdotnet)](./docs/ARCHITECTURE.md)
 
 > **Dedicated to Alex (and every friend battling imposter syndrome, pre-interview anxiety, or burnout).**  
 > Built with open-source AI at its core for the **[Hacktoberfest Weekend Challenge: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)**.  
@@ -138,6 +139,8 @@ A vibrant creator studio for composing and sending personalized digital cards di
 ---
 
 ## 🛠️ Architecture & Tech Stack
+
+> 📖 **Deep Dive Documentation:** For full system topology, Mermaid sequence diagrams, clinical CBT formulas, and mathematical streak specifications, read the complete [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 
 - **Frontend Core:** React 19.2 (Vite 8)
 - **Styling & Design System:** Tailwind CSS v4 (`@tailwindcss/vite`) with custom dark-mode glassmorphism
