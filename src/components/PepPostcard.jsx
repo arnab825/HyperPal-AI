@@ -416,26 +416,41 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
           <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl glass-card space-y-5">
             
             {/* Primary Method Switcher: Handcrafted (No AI) vs AI Magic Composer */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div>
+            <div className={"p-4 rounded-2xl border transition-all duration-500 ease-out flex flex-col sm:flex-row items-center justify-between gap-3.5 " + (
+              !includeAi
+                ? 'bg-gradient-to-r from-amber-950/40 via-slate-900 to-emerald-950/25 border-amber-500/40 shadow-lg shadow-amber-950/20'
+                : 'bg-gradient-to-r from-purple-950/40 via-slate-900 to-pink-950/25 border-purple-500/40 shadow-lg shadow-purple-950/20'
+            )}>
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-bold text-white">Creation Method</span>
-                  <span className={"text-[10px] font-bold px-2 py-0.5 rounded-full border " + (
+                  <span className="text-xs sm:text-sm font-extrabold text-white font-['Outfit']">Creation Method</span>
+                  <span className={"text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 transition-all duration-300 " + (
                     includeAi 
-                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' 
-                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-sm' 
+                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
                   )}>
-                    {includeAi ? '✨ AI Assisted' : '✍️ 100% Human (No AI)'}
+                    {includeAi ? <Sparkles className="w-3 h-3 text-amber-400" /> : <Heart className="w-3 h-3 text-pink-400 fill-pink-400" />}
+                    <span>{includeAi ? 'AI Magic Co-pilot' : '100% Human (No AI)'}</span>
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-400 transition-colors duration-300">
                   {includeAi 
                     ? "Co-pilot an emotional cheer with open weights or Gemini for " + friend.name + "."
                     : "Write personal words directly from the heart to " + friend.name + " with zero AI generation."}
                 </p>
               </div>
 
-              <div className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800 w-full sm:w-auto shrink-0">
+              {/* Liquid Sliding Toggle Switch */}
+              <div className="relative p-1 bg-slate-950/90 rounded-2xl border border-slate-800 flex items-center w-full sm:w-auto shrink-0 overflow-hidden shadow-inner">
+                {/* Smooth Animated Sliding Indicator */}
+                <div 
+                  className={"absolute top-1 bottom-1 rounded-xl transition-all duration-300 ease-out pointer-events-none " + (
+                    !includeAi 
+                      ? 'left-1 w-[calc(50%-4px)] sm:w-[155px] bg-gradient-to-r from-amber-500 to-orange-500 shadow-md shadow-amber-500/30' 
+                      : 'left-[calc(50%+2px)] sm:left-[161px] w-[calc(50%-4px)] sm:w-[138px] bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 shadow-md shadow-purple-600/30'
+                  )}
+                />
+
                 <button
                   type="button"
                   onClick={() => {
@@ -443,14 +458,16 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                     setIncludeAi(false);
                     setCustomTab('text');
                   }}
-                  className={"flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer " + (
-                    !includeAi
-                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                      : 'text-slate-400 hover:text-slate-200'
+                  className={"relative z-10 flex-1 sm:w-[155px] py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer " + (
+                    !includeAi ? 'text-slate-950 font-black' : 'text-slate-400 hover:text-slate-200'
                   )}
                 >
-                  <span>✍️ Write My Own (No AI)</span>
+                  <span>✍️ Write My Own</span>
+                  <span className={"text-[9px] font-extrabold px-1.5 py-0.2 rounded transition-colors " + (
+                    !includeAi ? 'bg-black/20 text-slate-950' : 'bg-slate-800 text-slate-400'
+                  )}>No AI</span>
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -458,67 +475,103 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                     setIncludeAi(true);
                     setCustomTab('ai');
                   }}
-                  className={"flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer " + (
-                    includeAi
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-slate-200'
+                  className={"relative z-10 flex-1 sm:w-[138px] py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer " + (
+                    includeAi ? 'text-white font-black' : 'text-slate-400 hover:text-slate-200'
                   )}
                 >
-                  <Wand2 className="w-3.5 h-3.5" />
+                  <Wand2 className={"w-3.5 h-3.5 transition-transform duration-300 " + (includeAi ? 'rotate-12 scale-110 text-amber-300' : 'text-slate-400')} />
                   <span>✨ AI Composer</span>
                 </button>
               </div>
             </div>
 
-            {/* Customizer Mode Navigation Tabs */}
-            <div className="flex items-center p-1 bg-slate-900/80 border border-slate-800 rounded-xl gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  soundService.playPop();
-                  setCustomTab('ai');
-                }}
-                className={'flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ' + (
-                  customTab === 'ai'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                )}
-              >
-                <Wand2 className="w-3.5 h-3.5" />
-                <span>AI Magic Writer</span>
-              </button>
+            {/* Context-Aware Navigation Tabs with Smooth Indicator */}
+            <div className="flex items-center p-1 bg-slate-900/90 border border-slate-800/90 rounded-2xl gap-1 shadow-inner transition-all duration-300">
+              {includeAi ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundService.playPop();
+                      setCustomTab('ai');
+                    }}
+                    className={"flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer " + (
+                      customTab === 'ai'
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/25 scale-[1.01]'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    )}
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>AI Prompts & Vibe</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  soundService.playPop();
-                  setCustomTab('style');
-                }}
-                className={'flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ' + (
-                  customTab === 'style'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                )}
-              >
-                <Palette className="w-3.5 h-3.5" />
-                <span>Theme & Badge</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundService.playPop();
+                      setCustomTab('style');
+                    }}
+                    className={"flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer " + (
+                      customTab === 'style'
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-md shadow-amber-500/25 scale-[1.01]'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    )}
+                  >
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>Theme & Stamps</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  soundService.playPop();
-                  setCustomTab('text');
-                }}
-                className={'flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ' + (
-                  customTab === 'text'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                )}
-              >
-                <Type className="w-3.5 h-3.5" />
-                <span>Message & Font</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundService.playPop();
+                      setCustomTab('text');
+                    }}
+                    className={"flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer " + (
+                      customTab === 'text'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/25 scale-[1.01]'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    )}
+                  >
+                    <Type className="w-3.5 h-3.5" />
+                    <span>Edit & Fine-Tune</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundService.playPop();
+                      setCustomTab('text');
+                    }}
+                    className={"flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer " + (
+                      customTab === 'text'
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-md shadow-amber-500/25 scale-[1.01]'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    )}
+                  >
+                    <Type className="w-3.5 h-3.5" />
+                    <span>✍️ Handcrafted Message</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundService.playPop();
+                      setCustomTab('style');
+                    }}
+                    className={"flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer " + (
+                      customTab === 'style'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/25 scale-[1.01]'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    )}
+                  >
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>Theme & Stamps</span>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* TAB 1: AI MAGIC WRITER */}
