@@ -185,6 +185,7 @@ export default function App() {
             onAddWin={handleAddWin}
             onDeleteWin={handleDeleteWin}
             friend={friend}
+            onNavigateTab={setActiveTab}
           />
         )}
 

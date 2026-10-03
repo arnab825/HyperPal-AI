@@ -4,6 +4,7 @@ import { Volume2, VolumeX, Copy, Check, BookmarkPlus, Sparkles, RefreshCw, Flame
 import { PERSONAS, SITUATIONS, generateHypeSpeech } from '../services/aiService';
 import { speechService } from '../services/speechService';
 import AudioWaveVisualizer from './AudioWaveVisualizer';
+import { soundService } from '../services/soundService';
 
 export default function HypeGenerator({ friend, onSaveToVault, settings }) {
   const [selectedPersona, setSelectedPersona] = useState('hype');
@@ -68,6 +69,7 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
   };
 
   const handleCopy = () => {
+    soundService.playPop();
     navigator.clipboard.writeText(hypeSpeech);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -75,6 +77,7 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
 
   const handleSaveWin = () => {
     if (!saved) {
+      soundService.playSuccess();
       onSaveToVault({
         title: `Hype Booster for ${friend.name}`,
         content: hypeSpeech,
@@ -124,6 +127,7 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
               <button
                 key={p.id}
                 onClick={() => {
+                  soundService.playPop();
                   setSelectedPersona(p.id);
                   if (isSpeaking) speechService.stop();
                   setIsSpeaking(false);

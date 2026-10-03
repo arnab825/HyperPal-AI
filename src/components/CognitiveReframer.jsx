@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Brain, ArrowRight, CheckCircle2, ShieldCheck, Zap, RefreshCw, BookmarkPlus } from 'lucide-react';
 import { reframeThought } from '../services/aiService';
+import { soundService } from '../services/soundService';
 
 const SAMPLE_THOUGHTS = [
   "I'm a complete fraud. Everyone else on my team grasps this architecture instantly, and I'm drowning.",
@@ -29,6 +30,7 @@ export default function CognitiveReframer({ friend, onSaveToVault, settings }) {
         model: settings?.model,
         provider: settings?.provider,
       });
+      soundService.playSuccess();
       setResult(data);
     } catch (e) {
       console.error(e);
@@ -39,6 +41,7 @@ export default function CognitiveReframer({ friend, onSaveToVault, settings }) {
 
   const handleSaveToVault = () => {
     if (!result || saved) return;
+    soundService.playSuccess();
     onSaveToVault({
       title: `Breakthrough Reframe for ${friend.name}`,
       content: `Distortion: ${result.distortion}\n\nReframe: ${result.reframedThought}\n\nMicro-Action: ${result.microAction}`,
