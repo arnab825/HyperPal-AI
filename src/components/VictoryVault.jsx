@@ -205,16 +205,24 @@ export default function VictoryVault({
   }, [wins, filterCategory, searchQuery]);
 
   const handlePolishWithAi = async () => {
-    if (!newTitle.trim()) {
-      alert('Please enter a milestone title first!');
-      return;
-    }
     setIsPolishingAi(true);
     soundService.playPop();
+
+    // If user hasn't entered a title yet, choose a high-impact default title for the category
+    const defaultTitles = {
+      coding: 'Completed System Design Mock Screening',
+      career: 'Passed Multi-Round Technical Interview',
+      wellness: 'Protected Focus & Reset Mental Clarity',
+      life: 'Overcame Imposter Syndrome & Shipped Today',
+    };
+
+    const activeTitle = newTitle.trim() || defaultTitles[newCategory] || 'Crushed Major Milestone';
+    const activeDetails = newContent.trim();
+
     try {
       const polished = await polishVictoryMilestone({
-        title: newTitle,
-        details: newContent,
+        title: activeTitle,
+        details: activeDetails,
         category: newCategory,
         friendName: friend.name,
         apiKey: settings?.apiKey,
@@ -222,13 +230,32 @@ export default function VictoryVault({
         model: settings?.model,
         provider: settings?.provider,
       });
+
+      if (!newTitle.trim()) {
+        setNewTitle(activeTitle);
+      }
       if (polished) {
         setNewContent(polished);
-        soundService.playSuccess();
-        confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } });
+      } else {
+        const fallbacks = {
+          coding: 'Navigated tough architectural trade-offs, diagnosed the bottleneck, and shipped a clean mutex lock.',
+          career: 'Articulated engineering trade-offs under evaluation, demonstrating clear senior competence and composure.',
+          wellness: 'Recognized cognitive fatigue, took a deliberate recharge walk, and returned with restored stamina.',
+          life: 'Refused to let inner doubts freeze progress, translating determination into hard evidence of growth.',
+        };
+        setNewContent(fallbacks[newCategory] || 'Demonstrated undeniable proof of capability and growth.');
       }
+      soundService.playSuccess();
+      confetti({ particleCount: 35, spread: 55, origin: { y: 0.6 } });
     } catch (err) {
       console.error('Error polishing win with AI:', err);
+      if (!newTitle.trim()) setNewTitle(activeTitle);
+      setNewContent(
+        activeDetails ||
+        (newCategory === 'coding'
+          ? 'Navigated tough architectural trade-offs, diagnosed the bottleneck, and shipped a clean mutex lock.'
+          : 'Articulated engineering trade-offs under evaluation, demonstrating clear senior competence and composure.')
+      );
     } finally {
       setIsPolishingAi(false);
     }
@@ -500,6 +527,29 @@ export default function VictoryVault({
                 placeholder="e.g. Completed System Design Mock Screening"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-amber-400"
               />
+              <div className="flex items-center gap-1.5 pt-1.5 overflow-x-auto scrollbar-none text-[11px]">
+                <span className="text-slate-500 text-[10px] shrink-0 font-medium">💡 Quick ideas:</span>
+                {[
+                  { t: 'Completed System Design Mock Screening', c: 'coding', d: 'Navigated tough architectural questions and kept composure under pressure.' },
+                  { t: 'Solved Stubborn Race Condition Bug', c: 'coding', d: 'Persisted through 6 hours of debugging, isolated the race condition, and shipped a mutex lock.' },
+                  { t: 'Passed Live Technical Phone Screen', c: 'career', d: 'Communicated clearly with engineering manager and solved live coding challenge.' },
+                  { t: 'Protected Rest & Reset Mental Focus', c: 'wellness', d: 'Took a deliberate recharge break instead of burning out, returning with 2x clarity.' },
+                ].map((preset, pIdx) => (
+                  <button
+                    key={pIdx}
+                    type="button"
+                    onClick={() => {
+                      soundService.playPop();
+                      setNewTitle(preset.t);
+                      setNewCategory(preset.c);
+                      setNewContent(preset.d);
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-amber-300 text-[10px] whitespace-nowrap cursor-pointer transition-all"
+                  >
+                    {preset.t.split(' ').slice(0, 3).join(' ')}...
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -527,12 +577,21 @@ export default function VictoryVault({
                   <button
                     type="button"
                     onClick={handlePolishWithAi}
-                    disabled={isPolishingAi || !newTitle.trim()}
-                    className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                    title="Optionally polish notes with AI (or write manually)"
+                    disabled={isPolishingAi}
+                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-[11px] font-bold text-amber-300 hover:text-amber-200 flex items-center gap-1.5 cursor-pointer shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                    title="Generate or polish victory breakthrough with AI"
                   >
-                    {isPolishingAi ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
-                    <span>{isPolishingAi ? 'Polishing...' : '✨ Polish with AI'}</span>
+                    {isPolishingAi ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{newTitle.trim() ? '✨ Polish with AI' : '✨ Auto-Fill with AI'}</span>
+                      </>
+                    )}
                   </button>
                 </div>
                 <input
