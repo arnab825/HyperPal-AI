@@ -190,6 +190,10 @@ export default function App() {
             settings={settings}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
             onOpenOpenAiExplainer={() => setIsOpenAiModalOpen(true)}
+            onPrefillCard={(cardData) => {
+              setSharedCard(cardData);
+              setActiveTab('postcard');
+            }}
           />
         )}
 

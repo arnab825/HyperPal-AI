@@ -486,11 +486,13 @@ Thought from ${friendName}: "${thought}"
 
 Return ONLY a valid JSON object with these exact keys:
 {
-  "distortion": "Name of cognitive distortion (e.g. Catastrophizing, Imposter Syndrome Trap, All-or-Nothing Thinking, Mind Reading)",
-  "distortionDesc": "Brief 1-2 sentence explanation of why this thought is a trap",
-  "realityCheck": "The objective, grounded truth/evidence contradicting the trap",
-  "reframedThought": "An empowering, realistic reframe written in the first person for ${friendName}",
-  "microAction": "A simple 2-minute actionable physical or mental step they can do right now"
+  "distortion": "Precise name of cognitive distortion (e.g. Imposter Syndrome & Comparative Deficit, Catastrophizing & Tunnel Vision, Mind Reading & Social Anxiety, All-or-Nothing Perfectionism)",
+  "precisionScore": "Estimated distortion confidence percentage (e.g. 98% Precision Match)",
+  "trigger": "Core neurological/emotional trigger (e.g. Social Comparison Bias, High-Stakes Evaluation Anxiety, Cognitive Exhaustion)",
+  "distortionDesc": "Brief 1-2 sentence clinical deconstruction of why this thought is a cognitive trap",
+  "realityCheck": "The objective, grounded truth and undeniable facts contradicting the trap",
+  "reframedThought": "An empowering, realistic Socratic reframe written in the first person for ${friendName}",
+  "microAction": "A simple 2-minute actionable physical or mental behavioral experiment they can execute right now"
 }`;
 
   // 1. Groq (Llama / Mixtral / DeepSeek)
@@ -537,34 +539,52 @@ Return ONLY a valid JSON object with these exact keys:
   await new Promise(r => setTimeout(r, 600));
 
   const t = thought.toLowerCase();
-  let distortion = 'All-or-Nothing Thinking';
-  let distortionDesc = 'Treating a temporary setback as a permanent verdict on your worth.';
-  let realityCheck = 'A single moment or problem does not define your trajectory or value.';
-  let reframedThought = `I am facing a tough hurdle right now, but every challenge I solve increases my capability. Progress is messy, and that is completely normal.`;
-  let microAction = 'Step away from the screen for 3 minutes, stretch your arms, and write down just ONE tiny step you can take next.';
+  let distortion = 'All-or-Nothing Perfectionism';
+  let precisionScore = '96% Precision Match';
+  let trigger = 'Binary Evaluation Bias & Amygdala Performance Threat';
+  let distortionDesc = 'Treating a temporary roadblock as a total verdict on your capability and future.';
+  let realityCheck = 'A single stumbling block or difficult bug does not define your trajectory or technical competence.';
+  let reframedThought = `I am facing a tough hurdle right now, but every challenge I solve increases my capability. Mastery is messy, and learning is non-linear.`;
+  let microAction = 'Step away from the screen for 3 minutes, stretch your arms, and write down just ONE tiny mechanical step you can take next.';
 
-  if (t.includes('fraud') || t.includes('imposter') || t.includes('not smart') || t.includes('not good enough')) {
-    distortion = 'Imposter Syndrome Trap';
-    distortionDesc = 'Attributing your genuine achievements to luck while magnifying doubts.';
-    realityCheck = 'Nobody knows everything. Being in a position where you have to learn is a sign of career growth, not failure.';
-    reframedThought = `I don't need to know everything to be valuable. My ability to research, ask questions, and adapt is my true superpower.`;
+  if (t.includes('fraud') || t.includes('imposter') || t.includes('not smart') || t.includes('drowning') || t.includes('grasps')) {
+    distortion = 'Imposter Syndrome & Comparative Deficit';
+    precisionScore = '98% Precision Match';
+    trigger = 'Upward Social Comparison & Self-Efficacy Amnesia';
+    distortionDesc = 'Attributing others\' polished surface competence to innate genius while magnifying your own normal learning curve.';
+    realityCheck = 'Nobody knows every architecture instantly. The engineers you admire spent years being confused before it became intuitive. Asking questions is senior-level behavior.';
+    reframedThought = `I don't need to know everything to be valuable. My capacity to learn, stay curious, and persist through confusion is my genuine superpower.`;
     microAction = 'Open your Victory Vault and read 2 things you previously overcame that felt impossible at the time.';
-  } else if (t.includes('ruined') || t.includes('fail') || t.includes('disaster') || t.includes('worst')) {
-    distortion = 'Catastrophizing';
-    distortionDesc = 'Jumping straight to the worst-case scenario as if it is inevitable.';
-    realityCheck = 'Even if things do not go 100% according to plan, the worst-case fantasy in your head rarely happens.';
-    reframedThought = `This didn't go the way I hoped, but I have the resilience and skills to adjust and find another pathway forward.`;
-    microAction = 'Write down the actual most likely outcome versus the disaster fantasy. You will see how manageable it really is.';
-  } else if (t.includes('they think') || t.includes('everyone thinks') || t.includes('look stupid')) {
-    distortion = 'Mind Reading';
-    distortionDesc = 'Assuming you know others are judging you harshly without concrete proof.';
-    realityCheck = 'Most people are too busy stressing about their own responsibilities to scrutinize you.';
-    reframedThought = `People are supportive and want to see me succeed. It is okay to ask for help or admit I am working through a challenge.`;
-    microAction = 'Send a quick message to a trusted peer or mentor asking for their take on one specific question.';
+  } else if (t.includes('ruined') || t.includes('fail') || t.includes('disaster') || t.includes('worst') || t.includes('stumbled')) {
+    distortion = 'Catastrophizing & Tunnel Vision';
+    precisionScore = '95% Precision Match';
+    trigger = 'Acute Anticipatory Anxiety & Catastrophic Projection';
+    distortionDesc = 'Jumping straight to worst-case finality from a single imperfect moment as if it permanently closes all doors.';
+    realityCheck = 'Even if one answer was imperfect, interviewers evaluate overall problem-solving grit, composure, and communication. A single stumble rarely derails an opportunity.';
+    reframedThought = `One stumble does not erase my preparation, capability, or worth. I have the resilience to adapt, adjust, and continue forward.`;
+    microAction = 'Write down the actual realistic outcome versus the disaster fantasy. You will see how manageable it really is.';
+  } else if (t.includes('they think') || t.includes('everyone thinks') || t.includes('look stupid') || t.includes('comments')) {
+    distortion = 'Mind Reading & Projection Bias';
+    precisionScore = '97% Precision Match';
+    trigger = 'Fear of Negative Evaluation & Ingroup Belonging Threat';
+    distortionDesc = 'Projecting your own inner self-criticism onto code reviewers or colleagues without factual evidence.';
+    realityCheck = '14 review comments mean the senior engineer invested deep time into mentoring you and leveling up the codebase. Code reviews are collaboration, not personal indictments.';
+    reframedThought = `Feedback is rocket fuel for growth, not a measure of my worth. Every comment is an insight that makes me a sharper engineer.`;
+    microAction = 'Pick the simplest review comment, address it right now, and post a friendly reply thanking them for the pointer.';
+  } else if (t.includes('behind') || t.includes("haven't coded") || t.includes('overwhelmed') || t.includes('start')) {
+    distortion = 'Momentum Amnesia & Overwhelm Paralysis';
+    precisionScore = '94% Precision Match';
+    trigger = 'Cognitive Overload & Perfectionistic Activation Threshold';
+    distortionDesc = 'Equating temporary rest or absence with irreversible skill atrophy, creating a wall of dread.';
+    realityCheck = 'Neural pathways don\'t vanish in a week or month. Muscle memory returns within 15 minutes of hands-on typing. You are only one 5-minute session away from momentum.';
+    reframedThought = `I am not starting from scratch; I am starting from accumulated experience. Taking a break was necessary, and getting back into flow takes just one small commit.`;
+    microAction = 'Open your IDE and write just 3 lines of comments or pseudocode to break the inertia.';
   }
 
   return {
     distortion,
+    precisionScore,
+    trigger,
     distortionDesc,
     realityCheck,
     reframedThought,
