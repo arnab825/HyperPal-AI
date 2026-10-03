@@ -140,6 +140,14 @@ export default function VictoryVault({
   const [showArmorModal, setShowArmorModal] = useState(false);
 
   const [speakingId, setSpeakingId] = useState(null);
+
+  const closeAllModals = () => {
+    setShowTotalWinsModal(false);
+    setShowStreakModal(false);
+    setShowRankModal(false);
+    setShowArmorModal(false);
+    setSelectedWin(null);
+  };
   const [copiedWinId, setCopiedWinId] = useState(null);
 
   const streakStats = useMemo(() => calculateStreakStats(wins), [wins]);
@@ -407,6 +415,7 @@ export default function VictoryVault({
           type="button"
           onClick={() => {
             soundService.playPop();
+            closeAllModals();
             setShowTotalWinsModal(true);
             confetti({ particleCount: 30, spread: 50, origin: { y: 0.3 } });
           }}
@@ -428,6 +437,7 @@ export default function VictoryVault({
           type="button"
           onClick={() => {
             soundService.playFlame();
+            closeAllModals();
             setShowStreakModal(true);
             confetti({ particleCount: 40, spread: 60, origin: { y: 0.3 } });
           }}
@@ -453,6 +463,7 @@ export default function VictoryVault({
           type="button"
           onClick={() => {
             soundService.playChime();
+            closeAllModals();
             setShowRankModal(true);
           }}
           className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-purple-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
@@ -476,6 +487,7 @@ export default function VictoryVault({
           type="button"
           onClick={() => {
             soundService.playSuccess();
+            closeAllModals();
             setShowArmorModal(true);
             confetti({ particleCount: 30, spread: 50, origin: { y: 0.3 } });
           }}
@@ -703,6 +715,7 @@ export default function VictoryVault({
                 key={win.id || win.title}
                 onClick={() => {
                   soundService.playChime();
+                  closeAllModals();
                   setSelectedWin(win);
                 }}
                 className="p-5 rounded-2xl glass-card border border-slate-800/80 hover:border-amber-500/50 hover:bg-slate-900/80 transition-all flex flex-col justify-between group space-y-3 relative cursor-pointer hover:-translate-y-1 hover:shadow-xl shadow-slate-950/40"
@@ -813,11 +826,11 @@ export default function VictoryVault({
       {showTotalWinsModal && (
         <div 
           onClick={() => setShowTotalWinsModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-3xl glass-panel border border-amber-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-amber-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -912,11 +925,11 @@ export default function VictoryVault({
       {showStreakModal && (
         <div 
           onClick={() => setShowStreakModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-3xl glass-panel border border-orange-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-orange-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1021,11 +1034,11 @@ export default function VictoryVault({
       {showRankModal && (
         <div 
           onClick={() => setShowRankModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-3xl glass-panel border border-purple-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-purple-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1126,11 +1139,11 @@ export default function VictoryVault({
       {showArmorModal && (
         <div 
           onClick={() => setShowArmorModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-3xl glass-panel border border-emerald-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-emerald-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1211,11 +1224,11 @@ export default function VictoryVault({
       {selectedWin && (
         <div 
           onClick={() => setSelectedWin(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-3xl glass-panel border border-amber-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-amber-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

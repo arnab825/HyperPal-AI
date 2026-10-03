@@ -6,7 +6,7 @@ export default function FriendStoryModal({ isOpen, onClose, friend, onNavigateTa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
       <div className="relative w-full max-w-2xl rounded-3xl glass-panel border border-slate-700/80 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between gap-4">

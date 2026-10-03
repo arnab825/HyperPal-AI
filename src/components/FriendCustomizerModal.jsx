@@ -86,7 +86,7 @@ export default function FriendCustomizerModal({ isOpen, onClose, friend, onUpdat
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
       <div className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl glass-panel border border-slate-700/80 p-5 sm:p-7 space-y-5 shadow-2xl relative">
         <button
           onClick={onClose}
