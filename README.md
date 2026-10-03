@@ -6,6 +6,9 @@
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge)](./LICENSE)
 [![Architecture: Docs](https://img.shields.io/badge/Architecture-Deep--Dive-purple?style=for-the-badge&logo=diagramsdotnet)](./docs/ARCHITECTURE.md)
+[![PRD: Specs](https://img.shields.io/badge/PRD-Product_Specs-blue?style=for-the-badge&logo=googledocs)](./docs/PRD.md)
+[![TRD: Technical](https://img.shields.io/badge/TRD-Technical_Specs-indigo?style=for-the-badge&logo=gitbook)](./docs/TRD.md)
+[![Design: System](https://img.shields.io/badge/Design_System-Tokens_%26_Theme-pink?style=for-the-badge&logo=figma)](./docs/THEME_AND_DESIGN_SYSTEM.md)
 
 > **Dedicated to Alex (and every friend battling imposter syndrome, pre-interview anxiety, or burnout).**  
 > Built with open-source AI at its core for the **[Hacktoberfest Weekend Challenge: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)**.  
@@ -137,6 +140,21 @@ A vibrant creator studio for composing and sending personalized digital cards di
 - **Direct Delivery Pipeline:** One-click links for **WhatsApp**, **Slack**, clipboard copy, or shareable URL parameters.
 
 ---
+
+
+---
+
+## 📚 Engineering & Design Documentation Suite
+
+For judges, contributors, and developers interested in our technical architecture and product design, explore our full documentation suite in the [`docs/`](./docs) folder:
+
+| Document | Purpose & Contents | Link |
+| :--- | :--- | :--- |
+| **🏛️ System Architecture** | High-level topology, Mermaid sequence diagrams, multi-engine inference cascade, mathematical streak formulas, and audio waveform engines. | [**docs/ARCHITECTURE.md**](./docs/ARCHITECTURE.md) |
+| **📋 Product Requirements (PRD)** | Problem statement, target personas, functional requirements (FR1–FR6), non-functional requirements (NFRs), and success KPIs. | [**docs/PRD.md**](./docs/PRD.md) |
+| **🛠️ Technical Requirements (TRD)** | Data schemas (`VictoryWin`, `FriendProfile`, `AISettings`), API contracts (Ollama, Groq, Gemini), stacking context portals, and build budgets. | [**docs/TRD.md**](./docs/TRD.md) |
+| **🎨 Theme & Design System** | Color tokens (Obsidian Void, Radiant Amber, etc.), typography scale, glassmorphism physics, postcard themes, and Web Audio haptics. | [**docs/THEME_AND_DESIGN_SYSTEM.md**](./docs/THEME_AND_DESIGN_SYSTEM.md) |
+| **💖 "Build for a Friend" Alignment** | Real-world story of Alex, mapping psychological hurdles to software features, and hand-off validation interview. | [**docs/BUILD_FOR_A_FRIEND_THEME.md**](./docs/BUILD_FOR_A_FRIEND_THEME.md) |
 
 ## 🛠️ Architecture & Tech Stack
 
