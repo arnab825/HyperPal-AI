@@ -352,6 +352,74 @@ Whatever resistance you're feeling right now ${customContext} is not evidence th
 Stop measuring yourself against an impossible standard of effortless perfection. Break this down: what is the single highest-leverage action you can take in the next 15 minutes? Execute that one thing. You have solved 100% of your hardest days so far, and you will navigate this one with flying colors.`;
 }
 
+// Dedicated AI Card Composer for Cheer / Postcard
+export async function generatePostcardAiMessage({
+  friendName = 'Alex',
+  occasion = 'interview',
+  vibe = 'hype',
+  customDetail = '',
+  apiKey = '',
+  apiEndpoint = '',
+  model = '',
+  provider = '',
+}) {
+  const creds = resolveCredentials(apiKey, apiEndpoint, model, provider);
+
+  const vibeMap = {
+    hype: 'unapologetic explosive energy, swagger, high-octane cheer squad belief',
+    bestie: 'warm, deeply validating, heartfelt bestie love, tea-spilling empathy',
+    mentor: 'strategic clarity, level-headed wisdom, reframing fear into high agency',
+    zen: 'grounded peace, deep breath, calm unshakable perspective',
+  };
+
+  const prompt = `You are HypePal AI composing a personalized, high-energy digital postcard message to send to a close friend named "${friendName}".
+Occasion / Use Case: ${occasion}
+Friend's context: ${customDetail || 'Facing a high-stakes challenge or self-doubt'}
+Tone / Vibe: ${vibeMap[vibe] || vibeMap.hype}
+
+Strict Rules:
+1. Length: Exactly 25 to 45 words. Punchy, memorable, and emotional.
+2. Do NOT add salutations like 'Dear Alex' or sign-offs like 'Best, John' (the card template already has dedicated recipient and sender fields).
+3. Output ONLY the raw quote text with 1 or 2 tasteful emojis. Nothing else.`;
+
+  // 1. Groq (Llama 3.3 70B, DeepSeek R1, Mixtral)
+  if (creds.provider === 'groq' && creds.activeKey) {
+    const raw = await callOpenAICompatible({
+      endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+      apiKey: creds.activeKey,
+      model: creds.activeModel || 'llama-3.3-70b-versatile',
+      prompt,
+      isJson: false,
+    });
+    if (raw) return raw.trim().replace(/^["']|["']$/g, '');
+  }
+
+  // 2. Google Gemini
+  if ((creds.provider === 'gemini' || !creds.activeKey) && (creds.activeKey || import.meta.env.VITE_GEMINI_API_KEY)) {
+    const geminiKey = creds.activeKey || import.meta.env.VITE_GEMINI_API_KEY;
+    const raw = await callGemini({
+      apiKey: geminiKey,
+      prompt,
+      model: creds.activeModel || 'gemini-3.8-flash',
+      isJson: false,
+    });
+    if (raw) return raw.trim().replace(/^["']|["']$/g, '');
+  }
+
+  // 3. Fallback Smart Generator
+  await new Promise(r => setTimeout(r, 400));
+  const fallbacks = {
+    interview: `Take a deep breath and walk into that room with your head held high. You've prepared tirelessly, your skills are real, and you deserve every opportunity ahead. Go crush it! 🚀`,
+    bug: `Remember: the hardest bugs always guard the greatest breakthroughs. Step back, reset your headspace, and come back swinging. Your grit is permanent! ⚡`,
+    rejection: `A closed door is simply redirection toward where you are actually meant to build something legendary. Don't discount how far you've come. I believe in you unconditionally. 💖`,
+    imposter: `Your anxious brain is lying to you today. You didn't get lucky—you earned every single ounce of competence through sweat and curiosity. You belong in this arena! 🌟`,
+    celebrate: `HECK YES! Seeing you conquer this milestone makes me so proud. Take a second to soak this victory in—you worked relentlessly for this moment! 🎉`,
+    monday: `New week, fresh momentum. Whatever roadblocks arise over the next few days, remember you have a 100% survival rate against difficult days. Let's do this! ☕`,
+  };
+
+  return fallbacks[occasion] || `You are 100x smarter, sharper, and more resilient than your nervous brain is letting you believe today. Take one step at a time—I'm rooting for you always! ⚡`;
+}
+
 // Cognitive Reframing Engine with Groq / Gemini / Offline CBT
 export async function reframeThought({ thought, friendName = 'Alex', apiKey = '', apiEndpoint = '', model = '', provider = '' }) {
   const creds = resolveCredentials(apiKey, apiEndpoint, model, provider);

@@ -33,7 +33,39 @@ const INITIAL_WINS = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('hype');
+  // Check if incoming URL has shared card query params
+  const [sharedCard, setSharedCard] = useState(() => {
+    try {
+      const url = new URL(window.location.href);
+      const to = url.searchParams.get('to');
+      const msg = url.searchParams.get('msg');
+      const from = url.searchParams.get('from');
+      const theme = url.searchParams.get('theme');
+      if (to || msg || from || url.hash === '#postcard') {
+        return {
+          to: to || '',
+          from: from || '',
+          msg: msg || '',
+          theme: theme || 'cyber',
+          isReceived: Boolean(to && msg),
+        };
+      }
+    } catch (e) {
+      console.error('Error reading shared card URL:', e);
+    }
+    return null;
+  });
+
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('to') || url.searchParams.has('msg') || url.hash === '#postcard') {
+        return 'postcard';
+      }
+    } catch {}
+    return 'hype';
+  });
+
   const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
@@ -59,7 +91,7 @@ export default function App() {
         const parsed = JSON.parse(saved);
         return parsed.map((w, i) => ({
           ...w,
-          id: w.id || `win_${Date.now()}_${i}`,
+          id: w.id || win__,
           category: (w.category || 'coding').toLowerCase(),
         }));
       }
@@ -94,7 +126,7 @@ export default function App() {
   const handleAddWin = (newWin) => {
     const winItem = {
       ...newWin,
-      id: `win_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: win__,
       category: (newWin.category || 'coding').toLowerCase(),
     };
     setWins([winItem, ...wins]);
@@ -153,6 +185,9 @@ export default function App() {
         {activeTab === 'postcard' && (
           <PepPostcard
             friend={friend}
+            sharedCard={sharedCard}
+            onUpdateFriend={setFriend}
+            settings={settings}
           />
         )}
       </main>
