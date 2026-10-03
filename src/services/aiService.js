@@ -368,10 +368,12 @@ export async function generatePostcardAiMessage({
   const creds = resolveCredentials(apiKey, apiEndpoint, model, provider);
 
   const vibeMap = {
-    hype: 'unapologetic explosive energy, swagger, high-octane cheer squad belief',
-    bestie: 'warm, deeply validating, heartfelt bestie love, tea-spilling empathy',
-    mentor: 'strategic clarity, level-headed wisdom, reframing fear into high agency',
-    zen: 'grounded peace, deep breath, calm unshakable perspective',
+    hype: 'unapologetic explosive energy, swagger, high-octane cheer squad belief and fire',
+    bestie: 'warm, deeply validating, heartfelt bestie love, tea-spilling empathy, drink water reminder',
+    mentor: 'strategic clarity, level-headed wisdom, reframing fear into high agency, architect mindset',
+    zen: 'grounded peace, deep breath, calm unshakable perspective, stoic clarity',
+    humor: 'witty coder humor, playful tech sarcasm, relatable developer empathy (CSS/bugs/merge conflicts), punchy and funny',
+    coach: 'championship locker room coach, intense rally, relentless focus, zero excuses grit, halftime speech',
   };
 
   const prompt = `You are HypePal AI composing a personalized, high-energy digital postcard message to send to a close friend named "${friendName}".

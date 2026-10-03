@@ -3,9 +3,11 @@ import confetti from 'canvas-confetti';
 import { 
   Send, Copy, Check, Heart, Sparkles, Share2, 
   Download, Link2, MessageCircle, Wand2, Loader2, 
-  Palette, Type, Award, Smile 
+  Palette, Type, Award, Smile, Flame, Shield, 
+  Lightbulb, Zap, Coffee 
 } from 'lucide-react';
 import { generatePostcardAiMessage } from '../services/aiService';
+import { soundService } from '../services/soundService';
 
 const CARD_THEMES = [
   { id: 'cyber', name: 'Neon Cyber', bg: 'from-amber-500 via-rose-600 to-purple-700', border: 'border-amber-400/40', text: 'text-amber-300', dot: 'bg-gradient-to-r from-amber-400 to-rose-500' },
@@ -18,7 +20,7 @@ const CARD_THEMES = [
   { id: 'obsidian', name: 'Midnight Obsidian', bg: 'from-slate-700 via-slate-800 to-zinc-950', border: 'border-amber-400/30', text: 'text-amber-200', dot: 'bg-gradient-to-r from-slate-600 to-zinc-800' },
 ];
 
-const CARD_ICONS = ['⚡', '🚀', '💖', '🏆', '🧠', '🔥', '💎', '🌟'];
+const CARD_ICONS = ['⚡', '💖', '🚀', '🌟', '🎯', '🔥', '🏆', '💎'];
 
 const BADGE_PRESETS = [
   'Official Hype',
@@ -47,22 +49,38 @@ const PRESET_MESSAGES = [
   "Just a quick reminder: you are 100x smarter and more capable than your anxious brain is letting you believe today. Keep moving forward! 🚀",
   "Dropping this in your inbox because you've been working tirelessly. Don't forget how far you've come. I'm rooting for you always! 💖",
   "Take a breath, grab a coffee, and remember: bugs and setbacks are temporary, but your grit is permanent. You got this! ⚡",
+  "No matter how many review comments come back on that pull request, your growth is real and your courage to build matters. Keep shipping! 🐙",
 ];
 
 const AI_OCCASIONS = [
-  { id: 'interview', label: 'Tech Interview', icon: '💼', theme: 'cyber' },
-  { id: 'bug', label: 'Stuck on Bug', icon: '🐛', theme: 'aurora' },
-  { id: 'imposter', label: 'Imposter Trap', icon: '🧠', theme: 'sunset' },
-  { id: 'rejection', label: 'Post-Rejection', icon: '💔', theme: 'sunset' },
-  { id: 'celebrate', label: 'Shipped a Win', icon: '🎉', theme: 'cyber' },
-  { id: 'monday', label: 'Monday Blues', icon: '☕', theme: 'galaxy' },
+  { id: 'interview', label: 'Tech Interview', icon: '💼', theme: 'cyber', defaultBadge: 'Interview Ready' },
+  { id: 'bug', label: 'Stuck on Bug', icon: '🐛', theme: 'aurora', defaultBadge: 'Debugger Elite' },
+  { id: 'imposter', label: 'Imposter Trap', icon: '🧠', theme: 'sunset', defaultBadge: 'Certified Legend' },
+  { id: 'rejection', label: 'Post-Rejection', icon: '💔', theme: 'sakura', defaultBadge: 'Unstoppable Grit' },
+  { id: 'celebrate', label: 'Shipped a Win', icon: '🎉', theme: 'solar', defaultBadge: 'Mission Complete' },
+  { id: 'monday', label: 'Monday Blues', icon: '☕', theme: 'galaxy', defaultBadge: 'Fresh Momentum' },
+  { id: 'deadline', label: 'Crunch Deadline', icon: '⏱️', theme: 'solar', defaultBadge: 'Focus Mode' },
+  { id: 'first_pr', label: 'First Open Source PR', icon: '🐙', theme: 'sakura', defaultBadge: 'Open Source Rebel' },
 ];
 
-const AI_VIBES = [
-  { id: 'hype', label: 'Hype Beast', icon: '⚡' },
-  { id: 'bestie', label: 'Bestie Love', icon: '💖' },
-  { id: 'mentor', label: 'Wise Mentor', icon: '🎯' },
-  { id: 'zen', label: 'Zen Calm', icon: '🌊' },
+const AI_TONES = [
+  { id: 'hype', label: 'Hype Beast', icon: '⚡', tagline: 'High-octane swagger & explosive fire', border: 'border-amber-500/40', activeBg: 'bg-amber-500/20 text-amber-200' },
+  { id: 'bestie', label: 'Empathetic Bestie', icon: '💖', tagline: 'Warm validation & unconditional support', border: 'border-pink-500/40', activeBg: 'bg-pink-500/20 text-pink-200' },
+  { id: 'mentor', label: 'Strategic Mentor', icon: '🎯', tagline: 'High-agency tactical wisdom & reframing', border: 'border-blue-500/40', activeBg: 'bg-blue-500/20 text-blue-200' },
+  { id: 'zen', label: 'Zen Stoic', icon: '🌊', tagline: 'Grounded calm, deep breaths & clarity', border: 'border-emerald-500/40', activeBg: 'bg-emerald-500/20 text-emerald-200' },
+  { id: 'humor', label: 'Witty Dev Humor', icon: '🧪', tagline: 'Playful tech sarcasm & coder solidarity', border: 'border-purple-500/40', activeBg: 'bg-purple-500/20 text-purple-200' },
+  { id: 'coach', label: 'Locker Room Coach', icon: '🏆', tagline: 'Halftime rally, discipline & zero excuses', border: 'border-orange-500/40', activeBg: 'bg-orange-500/20 text-orange-200' },
+];
+
+const PRESET_CONTEXT_CHIPS = [
+  { label: '💼 Mock interview in 30 mins', text: 'Live mock technical interview in 30 minutes, feeling pre-interview adrenaline & panic.' },
+  { label: '🐛 Stuck on state race condition', text: 'Spent 6 hours debugging a stubborn race condition in React, hitting a wall.' },
+  { label: '🧠 PR had 14 review comments', text: 'Received 14 code review comments from senior dev, spiraling with imposter syndrome.' },
+  { label: '💔 Rejected after final round', text: 'Got an automated rejection email after 4 rounds of intense interviews, feeling defeated.' },
+  { label: '🚀 Merged first Hacktoberfest PR', text: 'First open source pull request just got approved and merged for Hacktoberfest!' },
+  { label: '⏱️ Crunch deadline in 2 hours', text: 'Scrambling to finish project demo before deadline, need laser focus.' },
+  { label: '☕ Monday morning backlog dread', text: 'Dreading the upcoming sprint workload and feeling overwhelmed by tickets.' },
+  { label: '🧘 Reminder to drink water & breathe', text: 'Stuck behind screen for 8 hours without breaks, need reminder to pause.' },
 ];
 
 export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settings }) {
@@ -88,12 +106,13 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
   const [isReceivedCard, setIsReceivedCard] = useState(Boolean(sharedCard?.isReceived));
 
   const [aiOccasion, setAiOccasion] = useState('interview');
-  const [aiVibe, setAiVibe] = useState('hype');
+  const [aiTone, setAiTone] = useState('hype');
   const [aiDetail, setAiDetail] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   useEffect(() => {
     if (sharedCard?.isReceived) {
+      soundService.playSuccess();
       confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } });
       if (sharedCard.to && onUpdateFriend && sharedCard.to !== friend.name) {
         onUpdateFriend(prev => ({ ...prev, name: sharedCard.to }));
@@ -103,11 +122,12 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
 
   const handleGenerateAiMessage = async () => {
     setIsGeneratingAi(true);
+    soundService.playPop();
     try {
       const generated = await generatePostcardAiMessage({
         friendName: friend.name,
         occasion: aiOccasion,
-        vibe: aiVibe,
+        vibe: aiTone,
         customDetail: aiDetail || friend.challenge,
         apiKey: settings?.apiKey,
         apiEndpoint: settings?.apiEndpoint,
@@ -121,7 +141,10 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
         if (matchedOccasion) {
           const matchedTheme = CARD_THEMES.find(t => t.id === matchedOccasion.theme);
           if (matchedTheme) setTheme(matchedTheme);
+          if (matchedOccasion.defaultBadge) setBadgeText(matchedOccasion.defaultBadge);
+          setCardIcon(matchedOccasion.icon);
         }
+        soundService.playSuccess();
         confetti({ particleCount: 45, spread: 70, origin: { y: 0.6 } });
       }
     } catch (e) {
@@ -134,34 +157,36 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
   const generateShareUrl = () => {
     const origin = window.location.origin;
     const pathname = window.location.pathname;
-    const params = new URLSearchParams();
-    params.set('to', friend.name);
-    params.set('from', signature);
-    params.set('theme', theme.id);
-    params.set('icon', cardIcon);
-    params.set('badge', badgeText);
-    params.set('font', fontStyle.id);
-    params.set('msg', message);
-    return `${origin}${pathname}?${params.toString()}#postcard`;
+    const params = new URLSearchParams({
+      to: friend.name,
+      from: signature,
+      theme: theme.id,
+      font: fontStyle.id,
+      icon: cardIcon,
+      badge: badgeText,
+      msg: message,
+    });
+    return origin + pathname + '?' + params.toString() + '#postcard';
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(generateShareUrl());
+    soundService.playPop();
+    const url = generateShareUrl();
+    navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2200);
     confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
   };
 
   const handleNativeShare = async () => {
-    const shareUrl = generateShareUrl();
-    const shareData = {
-      title: `${cardIcon} A Personal Hype Card for ${friend.name}!`,
-      text: `"${message}" — From ${signature}`,
-      url: shareUrl,
-    };
-    if (navigator.share) {
+    soundService.playPop();
+    const url = generateShareUrl();
+    const title = 'Hype Card for ' + friend.name + '!';
+    const text = '"' + message + '" - Sent with heart on HypePal AI';
+
+    if (navigator?.share) {
       try {
-        await navigator.share(shareData);
+        await navigator.share({ title, text, url });
       } catch (err) {
         if (err.name !== 'AbortError') handleCopyLink();
       }
@@ -171,17 +196,32 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
   };
 
   const handleWhatsAppShare = () => {
-    const text = `💌 *A Personal Hype Card for ${friend.name}!* [${badgeText}]\n\n"${message}"\n\n— *From ${signature}*\n\nOpen card: ${generateShareUrl()}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    soundService.playPop();
+    const url = generateShareUrl();
+    const text = '💌 A Personal Hype Card for ' + friend.name + '!\n\n"' + message + '"\n\n- From ' + signature + '\nView interactive card: ' + url;
+    window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text), '_blank');
   };
 
   const handleTwitterShare = () => {
-    const tweet = `Sending a personal digital hype card to ${friend.name} with #HypePalAI! ${cardIcon}\n\n"${message.slice(0, 100)}..."\n\n#BuildForAFriend #Hacktoberfest\n${generateShareUrl()}`;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}`, '_blank');
+    soundService.playPop();
+    const url = generateShareUrl();
+    const text = '💌 Just built a personalized Hype Card for my friend ' + friend.name + ' with #HypePalAI!\n\n"' + message + '"\n\n#BuildForAFriend #Hacktoberfest';
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url), '_blank');
   };
-
   const handleCopyTextCard = () => {
-    const formattedCard = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n💌 A PERSONAL HYPE CARD FOR ${friend.name.toUpperCase()}\n[${badgeText.toUpperCase()}] • From: ${signature}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"${message}"\n\n${cardIcon} Created with HypePal AI — Built for a Friend!\nView card: ${generateShareUrl()}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+    soundService.playPop();
+    const formattedCard = [
+      '┌────────────────────────────────────────────────────────┐',
+      '│ ⚡ A PERSONAL HYPE CARD FOR ' + friend.name.toUpperCase().padEnd(26) + ' │',
+      '│ [' + badgeText.toUpperCase() + ']   From: ' + signature.padEnd(25) + ' │',
+      '├────────────────────────────────────────────────────────┤',
+      '│ "' + message + '"',
+      '│',
+      '│ ' + cardIcon + ' Created with HypePal AI • Built for a Friend!       │',
+      '│ View interactive card: ' + generateShareUrl(),
+      '└────────────────────────────────────────────────────────┘',
+    ].join('\n');
+
     navigator.clipboard.writeText(formattedCard);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2200);
@@ -189,6 +229,7 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
   };
 
   const handleDownloadImage = () => {
+    soundService.playPop();
     const canvas = document.createElement('canvas');
     canvas.width = 1200;
     canvas.height = 630;
@@ -242,11 +283,11 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-    ctx.fillText(`${cardIcon} ${tagline.toUpperCase()}`, 80, 100);
+    ctx.fillText(cardIcon + ' ' + tagline.toUpperCase(), 80, 100);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
-    ctx.fillText(`FOR: ${friend.name.toUpperCase()}`, 80, 140);
+    ctx.fillText('FOR: ' + friend.name.toUpperCase(), 80, 140);
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
     ctx.beginPath();
@@ -269,7 +310,7 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
     ctx.font = 'italic 90px Georgia, serif';
-    ctx.fillText('“', 75, 270);
+    ctx.fillText('"', 75, 270);
 
     ctx.fillStyle = '#f8fafc';
     if (fontStyle.id === 'mono') {
@@ -317,10 +358,10 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
     ctx.fillStyle = '#94a3b8';
     ctx.font = 'bold 16px monospace';
     ctx.textAlign = 'right';
-    ctx.fillText('#BuildForAFriend • HypePal AI', 1120, 545);
+    ctx.fillText('#BuildForAFriend   HypePal AI', 1120, 545);
 
     const link = document.createElement('a');
-    link.download = `hype-card-${friend.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+    link.download = 'hype-card-' + friend.name.toLowerCase().replace(/\s+/g, '-') + '.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
     confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 } });
@@ -345,55 +386,63 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
             onClick={() => setIsReceivedCard(false)}
             className="px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700 cursor-pointer shrink-0"
           >
-            Create Reply Card ⚡
+            Create Reply Card ✍️
           </button>
         </div>
       )}
 
       {/* Header */}
       <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-pink-950/20 to-slate-950/40 relative overflow-hidden">
-        <div className="max-w-2xl space-y-2 relative z-10">
+        <div className="max-w-3xl space-y-2 relative z-10">
           <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-pink-400/10 border border-pink-400/20 text-pink-300 text-[11px] sm:text-xs font-semibold">
             <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400/30" />
             <span>Personalized Direct Delivery</span>
           </div>
           <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight font-['Outfit']">
-            Digital Hype Postcard Studio 💌
+            Digital Hype Postcard Studio 💌✨
           </h2>
           <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-            Customize every visual detail—from AI prompts and color gradients to stamp badges, icons, and typography. Send an unforgettable token of belief to {friend.name}.
+            Customize every visual detail—from AI prompts, tones, and preset developer contexts to color gradients, mascot badges, and typography. Send an unforgettable token of belief to {friend.name}.
           </p>
         </div>
       </div>
 
+      {/* 2-Column Responsive Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-        {/* Left: Customizer Controls */}
+        
+        {/* Left: Customizer Controls (6 of 12 columns) */}
         <div className="lg:col-span-6 space-y-4">
           <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl glass-card space-y-5">
             
-            {/* Customizer Tabs */}
+            {/* Customizer Mode Navigation Tabs */}
             <div className="flex items-center p-1 bg-slate-900/80 border border-slate-800 rounded-xl gap-1">
               <button
                 type="button"
-                onClick={() => setCustomTab('ai')}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                onClick={() => {
+                  soundService.playPop();
+                  setCustomTab('ai');
+                }}
+                className={'flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ' + (
                   customTab === 'ai'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                )}
               >
                 <Wand2 className="w-3.5 h-3.5" />
-                <span>AI Writer</span>
+                <span>AI Magic Writer</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setCustomTab('style')}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                onClick={() => {
+                  soundService.playPop();
+                  setCustomTab('style');
+                }}
+                className={'flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ' + (
                   customTab === 'style'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                )}
               >
                 <Palette className="w-3.5 h-3.5" />
                 <span>Theme & Badge</span>
@@ -401,12 +450,15 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
 
               <button
                 type="button"
-                onClick={() => setCustomTab('text')}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                onClick={() => {
+                  soundService.playPop();
+                  setCustomTab('text');
+                }}
+                className={'flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ' + (
                   customTab === 'text'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                )}
               >
                 <Type className="w-3.5 h-3.5" />
                 <span>Message & Font</span>
@@ -416,90 +468,145 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
             {/* TAB 1: AI MAGIC WRITER */}
             {customTab === 'ai' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-950/40 via-slate-900 to-pink-950/20 border border-purple-500/30 space-y-3">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-950/40 via-slate-900 to-pink-950/20 border border-purple-500/30 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                       AI Emotional Tailoring
                     </span>
                     <span className="text-[10px] text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
-                      Open Weights & Gemini
+                      Open Weights & Gemini Ready
                     </span>
                   </div>
 
+                  {/* 1. Occasions */}
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                      1. Select Friend's Current Situation
+                      1. Select Friend's Current Situation (8 Occasions)
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
                       {AI_OCCASIONS.map((occ) => (
                         <button
                           key={occ.id}
                           type="button"
-                          onClick={() => setAiOccasion(occ.id)}
-                          className={`px-2 py-1.5 rounded-lg border text-[11px] font-medium flex items-center gap-1.5 transition-all text-left cursor-pointer ${
+                          onClick={() => {
+                            soundService.playPop();
+                            setAiOccasion(occ.id);
+                          }}
+                          className={'px-2.5 py-2 rounded-xl border text-[11px] font-medium flex items-center gap-2 transition-all text-left cursor-pointer ' + (
                             aiOccasion === occ.id
-                              ? 'bg-purple-500/20 border-purple-400/60 text-purple-200 shadow-sm'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-300'
-                          }`}
+                              ? 'bg-purple-500/25 border-purple-400/80 text-white shadow-sm'
+                              : 'bg-slate-900/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                          )}
                         >
-                          <span className="text-xs shrink-0">{occ.icon}</span>
+                          <span className="text-sm shrink-0">{occ.icon}</span>
                           <span className="truncate">{occ.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
+                  {/* 2. Emotional Frequency / Tone */}
                   <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                      2. Choose Emotional Frequency
-                    </label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {AI_VIBES.map((v) => (
-                        <button
-                          key={v.id}
-                          type="button"
-                          onClick={() => setAiVibe(v.id)}
-                          className={`px-2 py-1.5 rounded-lg border text-[11px] font-medium flex items-center gap-1.5 transition-all text-left cursor-pointer ${
-                            aiVibe === v.id
-                              ? 'bg-amber-500/20 border-amber-400/60 text-amber-200 shadow-sm'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-300'
-                          }`}
-                        >
-                          <span className="text-xs shrink-0">{v.icon}</span>
-                          <span className="truncate">{v.label}</span>
-                        </button>
-                      ))}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        2. Choose Emotional Tone (6 Expressive Tones)
+                      </label>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        {AI_TONES.find(t => t.id === aiTone)?.tagline}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {AI_TONES.map((tone) => {
+                        const isSelected = aiTone === tone.id;
+                        return (
+                          <button
+                            key={tone.id}
+                            type="button"
+                            onClick={() => {
+                              soundService.playPop();
+                              setAiTone(tone.id);
+                            }}
+                            className={'p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1 ' + (
+                              isSelected
+                                ? tone.border + ' ' + tone.activeBg + ' shadow-sm'
+                                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm">{tone.icon}</span>
+                              {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
+                            </div>
+                            <span className="text-[11px] font-bold truncate text-white">{tone.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
+                  {/* 3. Preset Context Message Chips */}
                   <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                      3. Personalized Context (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={`e.g. ${friend.challenge || 'System design interview at 2pm'}`}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                        <Lightbulb className="w-3 h-3 text-amber-400" />
+                        <span>3. Quick Preset Developer Context (1-Click Fill)</span>
+                      </label>
+                      {aiDetail && (
+                        <button
+                          type="button"
+                          onClick={() => setAiDetail('')}
+                          className="text-[10px] text-slate-500 hover:text-slate-400 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                      {PRESET_CONTEXT_CHIPS.map((chip, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            soundService.playPop();
+                            setAiDetail(chip.text);
+                          }}
+                          className={'px-2 py-1 rounded-lg border text-[10px] transition-all cursor-pointer text-left ' + (
+                            aiDetail === chip.text
+                              ? 'bg-amber-500/20 border-amber-400/70 text-amber-300 font-bold'
+                              : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 text-slate-300 hover:text-white'
+                          )}
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <textarea
+                      rows={2}
+                      placeholder={'Type or click a preset above (e.g. ' + (friend.challenge || 'Mock system design interview at 2pm') + ')'}
                       value={aiDetail}
                       onChange={(e) => setAiDetail(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-purple-400"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-purple-400 resize-none leading-relaxed"
                     />
                   </div>
 
+                  {/* Generate Button */}
                   <button
                     type="button"
                     onClick={handleGenerateAiMessage}
                     disabled={isGeneratingAi}
-                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-purple-900/30 transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isGeneratingAi ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Composing Personalized AI Card...</span>
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <Sparkles className="w-4 h-4 text-amber-300" />
                         <span>Generate Custom Card for {friend.name}</span>
                       </>
                     )}
@@ -520,14 +627,17 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                       <button
                         key={t.id}
                         type="button"
-                        onClick={() => setTheme(t)}
-                        className={`p-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-left flex items-center gap-2 ${
+                        onClick={() => {
+                          soundService.playPop();
+                          setTheme(t);
+                        }}
+                        className={'p-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-left flex items-center gap-2 ' + (
                           theme.id === t.id
                             ? 'border-amber-400 bg-slate-800/90 text-white shadow-sm'
                             : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
-                        }`}
+                        )}
                       >
-                        <span className={`w-3.5 h-3.5 rounded-full shrink-0 ${t.dot}`} />
+                        <span className={'w-3.5 h-3.5 rounded-full shrink-0 ' + t.dot} />
                         <span className="truncate">{t.name}</span>
                       </button>
                     ))}
@@ -543,12 +653,15 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                       <button
                         key={icon}
                         type="button"
-                        onClick={() => setCardIcon(icon)}
-                        className={`w-9 h-9 rounded-xl border flex items-center justify-center text-lg transition-all cursor-pointer ${
+                        onClick={() => {
+                          soundService.playPop();
+                          setCardIcon(icon);
+                        }}
+                        className={'w-9 h-9 rounded-xl border flex items-center justify-center text-lg transition-all cursor-pointer ' + (
                           cardIcon === icon
                             ? 'bg-amber-500/20 border-amber-400 scale-110 shadow-sm'
                             : 'bg-slate-900 border-slate-800 hover:bg-slate-800'
-                        }`}
+                        )}
                       >
                         {icon}
                       </button>
@@ -572,12 +685,15 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                       <button
                         key={bp}
                         type="button"
-                        onClick={() => setBadgeText(bp)}
-                        className={`px-2 py-0.5 rounded-md border text-[10px] font-semibold transition-all cursor-pointer ${
+                        onClick={() => {
+                          soundService.playPop();
+                          setBadgeText(bp);
+                        }}
+                        className={'px-2 py-0.5 rounded-md border text-[10px] font-semibold transition-all cursor-pointer ' + (
                           badgeText === bp
                             ? 'bg-amber-500/20 border-amber-400/60 text-amber-300'
                             : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-300'
-                        }`}
+                        )}
                       >
                         {bp}
                       </button>
@@ -594,12 +710,15 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                       <button
                         key={tl}
                         type="button"
-                        onClick={() => setTagline(tl)}
-                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all text-left cursor-pointer ${
+                        onClick={() => {
+                          soundService.playPop();
+                          setTagline(tl);
+                        }}
+                        className={'px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all text-left cursor-pointer ' + (
                           tagline === tl
                             ? 'bg-slate-800 border-amber-400/60 text-slate-200'
                             : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-300'
-                        }`}
+                        )}
                       >
                         {tl}
                       </button>
@@ -621,12 +740,15 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                       <button
                         key={f.id}
                         type="button"
-                        onClick={() => setFontStyle(f)}
-                        className={`p-2.5 rounded-xl border text-xs transition-all cursor-pointer text-left ${
+                        onClick={() => {
+                          soundService.playPop();
+                          setFontStyle(f);
+                        }}
+                        className={'p-2.5 rounded-xl border text-xs transition-all cursor-pointer text-left ' + (
                           fontStyle.id === f.id
                             ? 'border-amber-400 bg-slate-800/90 text-white font-bold'
                             : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
-                        }`}
+                        )}
                       >
                         <span>{f.name}</span>
                       </button>
@@ -656,16 +778,19 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                       <button
                         key={i}
                         type="button"
-                        onClick={() => setMessage(msg)}
-                        className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
+                        onClick={() => {
+                          soundService.playPop();
+                          setMessage(msg);
+                        }}
+                        className={'w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer ' + (
                           message === msg
                             ? 'bg-pink-500/10 border-pink-500/40 text-pink-200 shadow-sm'
                             : 'bg-slate-900/60 hover:bg-slate-800/80 border-slate-800 text-slate-300 hover:text-white'
-                        }`}
+                        )}
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-xs shrink-0 select-none">
-                            {i === 0 ? '🚀' : i === 1 ? '💖' : '☕'}
+                            {i === 0 ? '🚀' : i === 1 ? '💖' : i === 2 ? '⚡' : '🐙'}
                           </span>
                           <span className="text-xs truncate block min-w-0 flex-1 leading-normal">
                             "{msg}"
@@ -724,11 +849,11 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={'py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ' + (
                     copiedLink
                       ? 'bg-amber-500/20 border-amber-400 text-amber-200'
                       : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 text-slate-300'
-                  }`}
+                  )}
                 >
                   {copiedLink ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <Link2 className="w-3.5 h-3.5" />}
                   <span>{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
@@ -756,9 +881,9 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
           </div>
         </div>
 
-        {/* Right: Live Card Visualizer */}
-        <div className="lg:col-span-6 flex justify-center w-full sticky top-20">
-          <div className={`w-full max-w-lg rounded-2xl sm:rounded-3xl p-1 bg-gradient-to-br ${theme.bg} shadow-2xl shadow-purple-950/50 relative overflow-hidden transition-all duration-300`}>
+        {/* Right: Live Card Visualizer (6 of 12 columns, sticky ONLY on lg screens) */}
+        <div className="lg:col-span-6 flex justify-center w-full lg:sticky lg:top-6 z-10">
+          <div className={'w-full max-w-lg rounded-2xl sm:rounded-3xl p-1 bg-gradient-to-br ' + theme.bg + ' shadow-2xl shadow-purple-950/50 relative overflow-hidden transition-all duration-300'}>
             <div className="rounded-[18px] sm:rounded-[22px] bg-slate-950/90 backdrop-blur-xl p-5 sm:p-8 md:p-10 flex flex-col justify-between min-h-[340px] sm:min-h-[380px] space-y-6 relative">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -769,17 +894,17 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                   </div>
                 </div>
 
-                <div className={`px-2.5 py-1 rounded-full border ${theme.border} bg-slate-900/80 text-[10px] font-black uppercase tracking-wider ${theme.text} shrink-0 shadow-sm`}>
+                <div className={'px-2.5 py-1 rounded-full border ' + theme.border + ' bg-slate-900/80 text-[10px] font-black uppercase tracking-wider ' + theme.text + ' shrink-0 shadow-sm'}>
                   {badgeText}
                 </div>
               </div>
 
               <div className="relative my-auto py-2">
-                <span className="text-4xl sm:text-5xl font-serif text-slate-700/40 absolute -top-5 sm:-top-6 -left-2 sm:-left-3 select-none">“</span>
-                <p className={`text-sm sm:text-base md:text-lg text-slate-100 leading-relaxed z-10 relative ${fontStyle.class}`}>
+                <span className="text-4xl sm:text-5xl font-serif text-slate-700/40 absolute -top-5 sm:-top-6 -left-2 sm:-left-3 select-none">"</span>
+                <p className={'text-sm sm:text-base md:text-lg text-slate-100 leading-relaxed z-10 relative ' + fontStyle.class}>
                   {message}
                 </p>
-                <span className="text-4xl sm:text-5xl font-serif text-slate-700/40 absolute -bottom-8 sm:-bottom-10 right-2 select-none">”</span>
+                <span className="text-4xl sm:text-5xl font-serif text-slate-700/40 absolute -bottom-8 sm:-bottom-10 right-2 select-none">"</span>
               </div>
 
               <div className="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-2">
@@ -794,6 +919,7 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
