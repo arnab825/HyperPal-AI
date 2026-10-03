@@ -1,12 +1,12 @@
 # ⚡ HypePal AI — An Open-Source Personal Cheerleader & Mindset Coach Built for a Friend
 
-*This project was built for the [Hacktoberfest Weekend Challenge: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01) with Open-Source AI at its absolute core.*
+*This is a submission for the [Hacktoberfest Weekend Challenge: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)*
 
 > 🌐 **TRY THE LIVE APPLICATION:** **[https://arnab825.github.io/HyperPal-AI/](https://arnab825.github.io/HyperPal-AI/)**  
 > 💻 **SOURCE CODE (MIT):** **[https://github.com/arnab825/HyperPal-AI](https://github.com/arnab825/HyperPal-AI)**  
 > 📱 **PWA & MOBILE READY:** Works seamlessly across iOS, Android, macOS, Linux, and Windows.
 
-![HypePal AI — Personal Cheerleader & Mindset Coach](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/doysvm1cg4y02r7ql7h6.png)
+![HypePal AI — Personal Cheerleader & Mindset Coach](https://raw.githubusercontent.com/arnab825/HyperPal-AI/master/public/screenshots/01-hype-engine-beast.png)
 
 ---
 
@@ -15,7 +15,7 @@
 > *"Build something with open-source AI at its core. That can mean running an open-weight model, building on an open-source agent harness or framework, running inference locally, or all three. Whatever you pick, the open pieces should be what makes your project work.*  
 > *Ship something that solves a real problem for a friend or someone you love. Pick one real person and build something for them. It doesn't have to be big. It has to matter to them."*
 
-Here is the story of how **HypePal AI** was conceived, designed, and engineered specifically for my friend **Alex**.
+Here is the story of how **HypePal AI** was conceived, designed, and engineered specifically for my close friend **Alex**.
 
 ---
 
@@ -33,7 +33,7 @@ Yet, despite having real, undeniable coding ability, Alex was repeatedly paralyz
 When I looked at existing tools to help Alex, I realized they made things worse. Standard productivity apps treat developers like industrial machinery: they barrage you with red overdue tags, cold checklists, and guilt-inducing push notifications. Meditation apps are detached from the reality of merge conflicts and broken CI/CD pipelines. And commercial AI chatbots respond to emotional vulnerability with sterile, canned corporate disclaimers.
 
 What Alex needed was not another to-do list. **Alex needed an emotionally intelligent safety net**—a personalized, high-energy companion that could:
-1. Deconstruct irrational cognitive distortions in real time.
+1. Deconstruct irrational cognitive distortions in real time with clinical precision.
 2. Physically prove past capability when panic causes temporary confidence amnesia.
 3. Deliver customized, high-octane motivational hype in tailored love languages.
 4. Let close friends beam unexpected cheer cards straight to their phone before stressful milestones.
@@ -46,9 +46,12 @@ That is why **HypePal AI** was born.
 
 In accordance with the challenge guidelines, **open-source AI is the foundational engine that powers HypePal AI**. We refused to build a shallow proprietary wrapper. Instead, the application was architected around a multi-tier open-weight inference pipeline:
 
-- **Local Ollama (100% Offline):** Connects to `http://localhost:11434` running quantized open-weight models (`llama3.2`, `mistral`, `deepseek-r1:8b`, `gemma2:2b`). Zero bytes leave the machine.
+- **Local Ollama (100% Offline & Private):** Connects to `http://localhost:11434` running quantized open-weight models (`llama3.2`, `mistral`, `deepseek-r1:8b`, `gemma2:2b`). Zero bytes leave the machine.
 - **Groq Cloud (Open Weights):** Ultra-fast open-weight inference on Meta Llama 3.3 70B, DeepSeek R1 Distill 70B, Qwen 2.5 32B, and Mixtral 8x7B at 750+ tokens/second.
+- **Google Gemini API:** Native cloud integration with Gemini 3.8 Flash, 3.7 Flash, and 3.6 Flash for multi-provider redundancy.
 - **On-Device Edge Heuristics:** Built-in procedural engine ensuring 100% uptime in Airplane Mode with zero network dependencies.
+
+![AI Provider & Model Settings — Gemini, Groq, and Local Ollama](https://raw.githubusercontent.com/arnab825/HyperPal-AI/master/public/screenshots/02-ai-model-settings.png)
 
 ---
 
@@ -110,52 +113,70 @@ No single tone works for every emotional state. When Alex is spiraling before an
 
 Built with native **Web Speech API audio read-out**, real-time audio waveform visualizers, canvas celebration confetti, and an **active Open AI Model Chip**.
 
-![Empathetic Bestie Celebration Dispatch](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/bt80bcoputa4ya664j3e.png)
+![Hype Beast Cheer Engine](https://raw.githubusercontent.com/arnab825/HyperPal-AI/master/public/screenshots/01-hype-engine-beast.png)
 
 ---
 
-### 2. 🧠 "Reframe It!" — CBT Cognitive Distortion Buster
-When panic strikes, developers fall into classic cognitive traps. Rather than generating vague affirmations, HypePal AI uses principles from **Cognitive Behavioral Therapy (CBT)** to parse the thought into:
-1. **The Trap:** Diagnoses the distortion (*Catastrophizing*, *Mind Reading*, *All-or-Nothing Thinking*, or *Imposter Syndrome Trap*).
-2. **The Objective Reality Check:** Grounded, undeniable facts contradicting the anxiety.
-3. **The Empowering Reframe:** A bulletproof mantra to adopt immediately.
-4. **2-Minute Dopamine Micro-Action:** A tactile, low-friction micro-task (e.g., *"Step away from the screen, drink a glass of water, and write down just one parameter you need to test"*) to break analysis paralysis.
+### 2. 👤 Modern Friend Profile Drawer & Quick Customizer
+A polished profile drawer inspired by GitHub, Linear, and Notion that puts your friend front and center:
 
-![CBT-Backed Cognitive Distortion Buster](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/h0vijpcfqswhou1eydul.png)
+![Friend Profile Pill and Dropdown](https://raw.githubusercontent.com/arnab825/HyperPal-AI/master/public/screenshots/03-profile.png)
 
----
-
-### 3. 🏆 Alex's Victory Vault (The "Brag Sheet" Evidence Locker)
-Anxiety gives us temporary amnesia about our past triumphs. The Victory Vault acts as an undeniable evidence locker:
-- **Milestone Streak & Rank Progressions:** Levels up from *Spark Starter* ➔ *Rising Warrior* ➔ *Unstoppable Titan* ➔ *Mythic Architect*.
-- **"Relive Victory" Inspection Modal:** Interactive modal with Web Speech audio read-out and tactile Web Audio sound synthesis.
-- **1-Click Markdown Export:** Generates clean Markdown ready to drop into 1-on-1 performance reviews or resume bullets.
-
-![Alex's Victory Vault & Milestone Tracker](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/1gr7eg8xo1jbmowckm8t.png)
+- **Live Friend Challenge Quote:** Shows what your friend is currently tackling (*“Overcoming imposter syndrome before the technical interview demo”*).
+- **Synchronized Mini-Stats:** Live counter displaying Verified Wins, active streak days, and Mindset Armor tier.
+- **Quick Friend Switcher:** One-click toggling between sample friend personas (Alex, Jordan, Maya) or full custom profile editing.
+- **Audio FX Controls:** Integrated toggle for spatial pop and chime sound effects.
 
 ---
 
-### 4. 💌 AI-Powered Digital Hype Postcards & Multi-Channel Sharing Engine
-One thoughtful message from a friend can alter the trajectory of a stressful week. Rather than generic templates, HypePal AI features a dedicated **AI Magic Card Composer** and an interactive sharing engine:
+### 3. 🧠 "Reframe It!" — Clinical CBT Cognitive Distortion Buster
+When stress strikes, the human brain magnifies mistakes and catastrophizes outcomes. "Reframe It!" dismantles spirals with clinical Cognitive Behavioral Therapy (CBT) precision:
 
-- **Real-World Developer Occasions:** Generate tailored AI pep cards targeting specific emotional hurdles (Tech Interview in an Hour, Stuck on a Stubborn Bug, Post-Rejection Recovery, Imposter Trap Spike, Shipped a Milestone, Monday Blues & Grit).
-- **Full Multi-Channel Sharing Engine:**
-  - 🔗 **Interactive Live Web Links:** Generates dynamic URLs (`?to=Alex&from=Arnab&theme=cyber&msg=...#postcard`) that automatically open the card with a celebratory gift banner and confetti when your friend clicks it!
-  - 📲 **Native Web Share API (`navigator.share`):** 1-tap sharing to iOS & Android native apps (WhatsApp, iMessage, Telegram, Slack).
-  - 💬 **1-Click WhatsApp & X (Twitter):** Pre-fills formatted card quotes and links ready to send.
-  - 🖼️ **Client-Side High-Res Image Export (1200×630 PNG):** Uses in-browser HTML5 Canvas to render a studio-quality social card for Discord, Slack, or Instagram Stories without server round-trips.
-  - 📋 **Clean ASCII / Markdown Export:** Formatted text block for developer DMs.
+![Clinical CBT Cognitive Distortion Buster](https://raw.githubusercontent.com/arnab825/HyperPal-AI/master/public/screenshots/04-cbt-cognitive-reframe.png)
 
-![Send a Digital Hype Card](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/fvl12q4ia4vo7karg2f6.png)
+- **Distortion Focus Lenses:** Quick-filter lenses for `🎯 Auto-Detect`, `🧠 Imposter Syndrome`, `💥 Catastrophizing`, `🐙 PR Review Panic`, `⏱️ Inaction & Dread`, and `⚖️ Perfectionism`.
+- **6 Developer Scenarios:** Real-world engineering situations (14 PR review comments, stumbling on mock interviews, architecture overwhelm).
+- **Algorithmic Match Precision & Neurological Trigger:** Identifies the distortion match percentage (e.g. *97% Precision Match*) and pinpoints the underlying neurological trigger (*Social Comparison & Pluralistic Ignorance*).
+- **4-Pillar CBT Restructuring:**
+  1. **The Trap:** Diagnoses the flawed cognitive bias.
+  2. **Objective Reality Check:** Grounds the user with undeniable counter-evidence.
+  3. **Empowering Socratic Reframe:** Formulates a rational, confidence-restoring mindset.
+  4. **2-Minute Dopamine Micro-Action:** Low-friction behavioral experiment to restart momentum.
+- **Action Pipeline:** 1-click **"Save as Breakthrough to Vault"** (automatically logs into the Victory Vault), **"Send as Cheer Card"**, and browser voice read-aloud.
 
 ---
 
-### 5. 🎨 Friend Profile Studio & Open-Source AI Privacy Center
-- **Friend Profile Studio:** Deeply customize who you are building for—choose from 10 avatar icons, 4 motivation love languages, custom domain tags (`#React`, `#SystemDesign`, `#JuniorDev`), and active challenges.
-- **Open-Source AI Privacy Center:** An interactive in-app portal detailing why open weights matter, complete with copy-pasteable Ollama shell commands and local architecture verifications.
-- **Modern Profile Dropdown:** Clean navbar profile pill integrating quick friend switching, audio toggles, live win streaks, and model settings.
+### 4. 🏆 Alex's Victory Vault & Mathematical Resilience Shield
+Imposter syndrome causes amnesia about past accomplishments. The Victory Vault acts as an undeniable externalized hard-evidence locker:
 
-![Friend Profile Studio & Open-Source Privacy Center](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/5b008wnz3w10swbe8v7e.png)
+![Alex's Victory Vault & Milestone Tracker](https://raw.githubusercontent.com/arnab825/HyperPal-AI/master/public/screenshots/05-victory-vault.png)
+
+- **Deterministic Calendar-Day Streak Engine:** Computed using strict $\Delta t = 24\text{ hours}$ local midnight timestamp comparisons (zero random number generators).
+- **4 Interactive Metric Deep-Dives:**
+  - **Total Wins:** Domain breakdown across Code & Tech, Career, Wellness, and Life.
+  - **Hype Streak:** 7-day consistency calendar matrix and 14-day momentum rate.
+  - **Rank Roadmap:** Clear progression tiers (*🌱 Spark Starter* ➔ *⚔️ Rising Warrior* ➔ *⚡ Unstoppable Titan* ➔ *👑 Mythic Architect*).
+  - **Mindset Armor:** Psychological defense index (*💎 Diamond Tier 98% Imposter Defense*).
+- **Smart "+ Log a Win" Modal:**
+  - Dedicated centered modal with fixed header, scrollable body, and pinned footer.
+  - `✨ Auto-Fill with AI` and `✨ Polish with AI` to turn rough milestones into brag-sheet bullets.
+  - 1-click quick preset idea chips.
+  - Option to automatically pre-fill and forward the victory as a Cheer Card.
+- **Zero Scrollbar Clutter & Mobile Elevation:** Built with background body scroll locking (`document.body.style.overflow = 'hidden'`) and React `createPortal`, completely eliminating overlapping double scrollbars (`||`) and mobile navbar collisions.
+- **1-Click Markdown Export:** Generates formatted brag sheets ready for 1-on-1s, performance reviews, and interview retrospectives.
+
+---
+
+### 5. 💌 Digital Hype Postcard Studio & Multi-Channel Sharing Engine
+One thoughtful message from a friend can alter the trajectory of a stressful week. Users can compose and send tailored digital cards directly to friends:
+
+![Digital Hype Postcard Studio](https://raw.githubusercontent.com/arnab825/HyperPal-AI/master/public/screenshots/06-digital-hype-card.png)
+
+- **Fluid Mode Switcher:** Smooth liquid animated sliding pill toggle between **"✍️ Write My Own"** (Handcrafted custom text, zero AI) and **"✨ AI Magic Composer"**.
+- **Context-Aware Controls:** Automatically hides AI tone controls and model selectors when writing handcrafted cards to keep the canvas clean.
+- **4 Vibrant Aesthetic Themes:** *Neon Cyber*, *Golden Sunset*, *Emerald Aurora*, and *Deep Space*.
+- **Interactive Live Web Links:** Generates dynamic URLs (`?to=Alex&from=Arnab&theme=cyber&msg=...#postcard`) that automatically open the card with a celebratory gift banner and confetti when your friend clicks it!
+- **Direct Delivery Pipeline:** 1-click links for **WhatsApp**, **Slack**, native Web Share API (`navigator.share`), or clipboard copy.
 
 ---
 
@@ -164,11 +185,12 @@ One thoughtful message from a friend can alter the trajectory of a stressful wee
 - **Frontend Core:** **React 19** & **Vite 8** (sub-400ms production builds, 397 kB bundle).
 - **Styling:** **Tailwind CSS v4** with hardware-accelerated glassmorphism and curated dark-mode HSL palettes.
 - **Audio & Haptics:** Custom zero-dependency **Web Audio API synthesizer** (`soundService.js`) and browser-native **Web Speech API** for voice synthesis.
+- **Modals & Overlays:** React `createPortal` with strict body scroll locking and non-conflicting stacking contexts.
+- **Mathematical Gamification:** Deterministic timestamp differencing calendar engine.
 - **Open-Source Inference:**
   - Local Ollama (`http://localhost:11434/api/generate`) for quantized open models.
   - Groq Cloud API for open-weight Llama 3.3 70B, DeepSeek R1, Qwen 2.5, and Mixtral.
   - Google Gemini 3.8/3.7 Flash for multi-provider cloud redundancy.
-- **Canvas Engines:** HTML5 Canvas 1200×630 high-resolution card generator & Canvas Confetti.
 - **Data Architecture:** 100% client-side `localStorage` isolation with zero telemetry.
 
 ---
@@ -205,3 +227,8 @@ When I sat down with Alex and opened the deployed app with their name and custom
 - 🏆 **Best Project Built for a Friend** (Tailor-made for Alex's interview imposter syndrome)
 - 🔓 **Open-Source AI / Open Weights Integration** (Llama 3.3, DeepSeek R1, Qwen 2.5, Mixtral)
 - ⚡ **Local Inference & Edge AI** (Ollama 100% offline laptop execution)
+
+---
+
+## 📄 License
+This project is open source and available under the [MIT License](./LICENSE).
