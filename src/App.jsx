@@ -41,12 +41,18 @@ export default function App() {
       const msg = url.searchParams.get('msg');
       const from = url.searchParams.get('from');
       const theme = url.searchParams.get('theme');
+      const icon = url.searchParams.get('icon');
+      const badge = url.searchParams.get('badge');
+      const font = url.searchParams.get('font');
       if (to || msg || from || url.hash === '#postcard') {
         return {
           to: to || '',
           from: from || '',
           msg: msg || '',
           theme: theme || 'cyber',
+          icon: icon || '⚡',
+          badge: badge || 'Official Hype',
+          font: font || 'sans',
           isReceived: Boolean(to && msg),
         };
       }
