@@ -40,7 +40,7 @@ export default function Navbar({
                 className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-400 hover:text-amber-400 transition-colors group cursor-pointer truncate max-w-[140px] xs:max-w-[180px] sm:max-w-none"
               >
                 <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-pink-400 fill-pink-400/50 group-hover:scale-110 transition-transform shrink-0" />
-                <span className="truncate">For: <strong className="text-slate-200 underline decoration-dotted underline-offset-2">{friend.name}</strong></span>
+                <span className="truncate flex items-center gap-1"><span>{friend.avatar || "👩‍💻"}</span><span>For: <strong className="text-slate-200 underline decoration-dotted underline-offset-2">{friend.name}</strong></span></span>
                 <span className="text-[9px] sm:text-[10px] text-slate-500 bg-slate-800/80 px-1 rounded shrink-0">edit</span>
               </button>
             </div>
