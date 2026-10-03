@@ -52,12 +52,13 @@ export const SITUATIONS = [
 ];
 
 export const GROQ_MODELS = [
-  { id: 'llama-3.3-70b-versatile', name: '🦙 Llama 3.3 70B (Latest Meta Flagship)', tag: 'Recommended' },
-  { id: 'deepseek-r1-distill-llama-70b', name: '🧠 DeepSeek R1 Distill 70B (High Reasoning)', tag: 'New' },
-  { id: 'qwen-2.5-32b', name: '💎 Qwen 2.5 32B (Top Open Benchmark)', tag: 'New' },
-  { id: 'llama-3.1-8b-instant', name: '⚡ Llama 3.1 8B Instant (Ultra-Fast 750+ tok/s)', tag: 'Fastest' },
-  { id: 'mixtral-8x7b-32768', name: '🌪️ Mixtral 8x7B (Mistral MoE Open Model)', tag: 'Popular' },
-  { id: 'gemma2-9b-it', name: '🔬 Gemma 2 9B (Google Open Weights)', tag: 'Efficient' },
+  { id: 'qwen/qwen3.8-27b', name: '💎 Qwen 3.8 27B (Groq Active • Tested ⚡)', tag: 'Recommended' },
+  { id: 'openai/gpt-oss-120b', name: '🧠 GPT-OSS 120B (Open Weights Flagship)', tag: 'Powerful' },
+  { id: 'openai/gpt-oss-20b', name: '⚡ GPT-OSS 20B (High-Speed Open Weight)', tag: 'Fast' },
+  { id: 'llama-3.3-70b-versatile', name: '🦙 Llama 3.3 70B (Meta Flagship)', tag: 'Popular' },
+  { id: 'deepseek-r1-distill-llama-70b', name: '🧠 DeepSeek R1 Distill 70B (CBT Reasoning)', tag: 'Reasoning' },
+  { id: 'llama-3.1-8b-instant', name: '⚡ Llama 3.1 8B Instant', tag: 'Fastest' },
+  { id: 'mixtral-8x7b-32768', name: '🌪️ Mixtral 8x7B (Mistral MoE)', tag: 'Popular' },
 ];
 
 // Modern Gemini 3.x and 2.5 models with clean emojis
@@ -108,7 +109,7 @@ export function resolveCredentials(customKey = '', customEndpoint = '', customMo
   let activeModel = (customModel || '').trim();
   if (!activeModel) {
     if (provider === 'groq') {
-      activeModel = (import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile').trim();
+      activeModel = (import.meta.env.VITE_GROQ_MODEL || 'qwen/qwen3.8-27b').trim();
     } else if (provider === 'gemini') {
       activeModel = (import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.8-flash').trim();
     } else {
@@ -182,6 +183,7 @@ async function callOpenAICompatible({ endpoint, apiKey, model, prompt, isJson = 
 async function callGemini({ apiKey, prompt, isJson = false, model }) {
   const modelsToTry = Array.from(new Set([
     model,
+    'gemini-3.6-flash',
     'gemini-3.8-flash',
     'gemini-3.7-flash',
     'gemini-3.5-flash-lite',
