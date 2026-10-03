@@ -132,7 +132,7 @@ export default function App() {
   const handleAddWin = (newWin) => {
     const winItem = {
       ...newWin,
-      id: win__,
+      id: `win_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       category: (newWin.category || 'coding').toLowerCase(),
     };
     setWins([winItem, ...wins]);

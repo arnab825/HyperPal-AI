@@ -27,6 +27,7 @@ export default function CognitiveReframer({ friend, onSaveToVault, settings }) {
         apiKey: settings?.apiKey,
         apiEndpoint: settings?.apiEndpoint,
         model: settings?.model,
+        provider: settings?.provider,
       });
       setResult(data);
     } catch (e) {

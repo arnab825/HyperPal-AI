@@ -35,6 +35,7 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
         apiKey: settings?.apiKey,
         apiEndpoint: settings?.apiEndpoint,
         model: settings?.model,
+        provider: settings?.provider,
       });
 
       setHypeSpeech(generated);
