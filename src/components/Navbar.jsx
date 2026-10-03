@@ -195,7 +195,7 @@ export default function Navbar({
 
               {/* MODERN PROFILE DROPDOWN MENU (Just like GitHub / Linear / Notion) */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2.5 w-80 sm:w-84 rounded-3xl glass-panel border border-slate-700/80 shadow-2xl p-4 sm:p-5 space-y-4 animate-fadeIn z-50">
+                <div className="absolute right-0 mt-2.5 w-80 sm:w-88 rounded-3xl bg-[#090e17] border border-slate-700/90 ring-1 ring-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] p-4 sm:p-5 space-y-4 animate-fadeIn z-50 backdrop-blur-2xl">
                   
                   {/* Profile Header */}
                   <div className="flex items-start gap-3 pb-3 border-b border-slate-800/80">
