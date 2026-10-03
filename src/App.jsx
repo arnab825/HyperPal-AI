@@ -159,6 +159,9 @@ export default function App() {
         onOpenFriendModal={() => setIsFriendModalOpen(true)}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         vaultCount={wins.length}
+        settings={settings}
+        onUpdateSettings={setSettings}
+        onUpdateFriend={setFriend}
       />
 
       {/* Main Content Area with mobile bottom padding */}
