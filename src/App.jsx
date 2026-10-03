@@ -6,6 +6,8 @@ import VictoryVault from './components/VictoryVault';
 import PepPostcard from './components/PepPostcard';
 import FriendCustomizerModal from './components/FriendCustomizerModal';
 import SettingsModal from './components/SettingsModal';
+import OpenAiExplainerModal from './components/OpenAiExplainerModal';
+import FriendStoryModal from './components/FriendStoryModal';
 import { Heart, Sparkles, Code2 } from 'lucide-react';
 
 const INITIAL_WINS = [
@@ -74,6 +76,8 @@ export default function App() {
 
   const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isOpenAiModalOpen, setIsOpenAiModalOpen] = useState(false);
+  const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
 
   // Friend state with localStorage persistence
   const [friend, setFriend] = useState(() => {
@@ -162,6 +166,8 @@ export default function App() {
         settings={settings}
         onUpdateSettings={setSettings}
         onUpdateFriend={setFriend}
+        onOpenOpenAiExplainer={() => setIsOpenAiModalOpen(true)}
+        onOpenStoryModal={() => setIsStoryModalOpen(true)}
       />
 
       {/* Main Content Area with mobile bottom padding */}
@@ -171,6 +177,8 @@ export default function App() {
             friend={friend}
             onSaveToVault={handleAddWin}
             settings={settings}
+            onOpenSettings={() => setIsSettingsModalOpen(true)}
+            onOpenOpenAiExplainer={() => setIsOpenAiModalOpen(true)}
           />
         )}
 
@@ -179,6 +187,8 @@ export default function App() {
             friend={friend}
             onSaveToVault={handleAddWin}
             settings={settings}
+            onOpenSettings={() => setIsSettingsModalOpen(true)}
+            onOpenOpenAiExplainer={() => setIsOpenAiModalOpen(true)}
           />
         )}
 
@@ -215,6 +225,20 @@ export default function App() {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
         onUpdateSettings={setSettings}
+      />
+
+      <OpenAiExplainerModal
+        isOpen={isOpenAiModalOpen}
+        onClose={() => setIsOpenAiModalOpen(false)}
+        friend={friend}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+      />
+
+      <FriendStoryModal
+        isOpen={isStoryModalOpen}
+        onClose={() => setIsStoryModalOpen(false)}
+        friend={friend}
+        onNavigateTab={setActiveTab}
       />
 
       {/* Footer with mobile offset */}

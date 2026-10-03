@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Brain, ArrowRight, CheckCircle2, ShieldCheck, Zap, RefreshCw, BookmarkPlus } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Brain, ArrowRight, CheckCircle2, ShieldCheck, Zap, RefreshCw, BookmarkPlus, Cpu, Sparkles } from 'lucide-react';
 import { reframeThought } from '../services/aiService';
 import { soundService } from '../services/soundService';
 
@@ -10,11 +10,30 @@ const SAMPLE_THOUGHTS = [
   "I haven't coded in a week and feel so behind that I don't even know where to start.",
 ];
 
-export default function CognitiveReframer({ friend, onSaveToVault, settings }) {
+export default function CognitiveReframer({ friend, onSaveToVault, settings, onOpenSettings, onOpenOpenAiExplainer }) {
   const [thought, setThought] = useState(SAMPLE_THOUGHTS[0]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [saved, setSaved] = useState(false);
+
+  const activeEngineLabel = useMemo(() => {
+    const provider = settings?.provider || 'gemini';
+    if (provider === 'groq') {
+      const m = settings?.model || 'llama-3.3-70b-versatile';
+      if (m.includes('llama')) return '🦙 Llama 3.3 (Open Weights)';
+      if (m.includes('deepseek')) return '🧠 DeepSeek R1 (Open Weights)';
+      if (m.includes('qwen')) return '💎 Qwen 2.5 (Open Weights)';
+      if (m.includes('mixtral')) return '🌪️ Mixtral 8x7B (Open Weights)';
+      return '⚡ Groq Open Weights';
+    }
+    if (provider === 'ollama') {
+      return `💻 Local Ollama (${settings?.model || 'llama3.2'}) • 100% Offline`;
+    }
+    if (provider === 'gemini') {
+      return `🚀 ${settings?.model || 'Gemini 3.8 Flash'}`;
+    }
+    return '⚡ Built-in Edge Engine (Offline Capable)';
+  }, [settings]);
 
   const handleAnalyze = async () => {
     if (!thought.trim()) return;
@@ -56,9 +75,33 @@ export default function CognitiveReframer({ friend, onSaveToVault, settings }) {
       {/* Header */}
       <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-indigo-950/20 to-purple-950/30 relative overflow-hidden">
         <div className="max-w-3xl space-y-2 relative z-10">
-          <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-300 text-[11px] sm:text-xs font-semibold">
-            <Brain className="w-3.5 h-3.5 text-purple-400" />
-            <span>CBT-Backed Distortion Buster</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-300 text-[11px] sm:text-xs font-semibold">
+              <Brain className="w-3.5 h-3.5 text-purple-400" />
+              <span>CBT-Backed Distortion Buster</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                soundService.playPop();
+                if (onOpenOpenAiExplainer) onOpenOpenAiExplainer();
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/20 text-[11px] sm:text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Open-Source AI • Zero Data Harvesting</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                soundService.playPop();
+                if (onOpenSettings) onOpenSettings();
+              }}
+              className="hidden sm:inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-[10px] text-amber-300 font-mono transition-colors cursor-pointer"
+            >
+              <Cpu className="w-3 h-3 text-amber-400" />
+              <span>{activeEngineLabel}</span>
+            </button>
           </div>
           <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight font-['Outfit']">
             Reframe It! 🧠

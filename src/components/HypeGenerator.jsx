@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import confetti from 'canvas-confetti';
-import { Volume2, VolumeX, Copy, Check, BookmarkPlus, Sparkles, RefreshCw, Flame } from 'lucide-react';
+import { Volume2, VolumeX, Copy, Check, BookmarkPlus, Sparkles, RefreshCw, Flame, Cpu, ShieldCheck } from 'lucide-react';
 import { PERSONAS, SITUATIONS, generateHypeSpeech } from '../services/aiService';
 import { speechService } from '../services/speechService';
 import AudioWaveVisualizer from './AudioWaveVisualizer';
 import { soundService } from '../services/soundService';
 
-export default function HypeGenerator({ friend, onSaveToVault, settings }) {
+export default function HypeGenerator({ friend, onSaveToVault, settings, onOpenSettings, onOpenOpenAiExplainer }) {
   const [selectedPersona, setSelectedPersona] = useState('hype');
   const [selectedSituation, setSelectedSituation] = useState(SITUATIONS[0].id);
   const [customNotes, setCustomNotes] = useState('');
@@ -19,6 +19,25 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
   const [saved, setSaved] = useState(false);
 
   const activePersonaObj = PERSONAS[selectedPersona];
+
+  const activeEngineLabel = useMemo(() => {
+    const provider = settings?.provider || 'gemini';
+    if (provider === 'groq') {
+      const m = settings?.model || 'llama-3.3-70b-versatile';
+      if (m.includes('llama')) return '🦙 Llama 3.3 (Open Weights)';
+      if (m.includes('deepseek')) return '🧠 DeepSeek R1 (Open Weights)';
+      if (m.includes('qwen')) return '💎 Qwen 2.5 (Open Weights)';
+      if (m.includes('mixtral')) return '🌪️ Mixtral 8x7B (Open Weights)';
+      return '⚡ Groq Open Weights';
+    }
+    if (provider === 'ollama') {
+      return `💻 Local Ollama (${settings?.model || 'llama3.2'}) • 100% Offline`;
+    }
+    if (provider === 'gemini') {
+      return `🚀 ${settings?.model || 'Gemini 3.8 Flash'}`;
+    }
+    return '⚡ Built-in Edge Engine (Offline Capable)';
+  }, [settings]);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -97,9 +116,22 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
         <div className="absolute -left-12 -bottom-12 w-64 h-64 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-3xl space-y-2 sm:space-y-3">
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-[11px] sm:text-xs font-semibold">
-            <Flame className="w-3.5 h-3.5" />
-            <span>Power Up {friend.name}'s Mindset</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-[11px] sm:text-xs font-semibold">
+              <Flame className="w-3.5 h-3.5" />
+              <span>Power Up {friend.name}'s Mindset</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                soundService.playPop();
+                if (onOpenOpenAiExplainer) onOpenOpenAiExplainer();
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/20 text-[11px] sm:text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Open-Source AI Core • 100% Offline & Private</span>
+            </button>
           </div>
           <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight font-['Outfit'] leading-tight">
             Turn Doubts into Pure Momentum ⚡
@@ -230,9 +262,23 @@ export default function HypeGenerator({ friend, onSaveToVault, settings }) {
               <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                 <span className="text-xl shrink-0">{activePersonaObj.avatar}</span>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider truncate">
-                    {activePersonaObj.name}'s Dispatch
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider truncate">
+                      {activePersonaObj.name}'s Dispatch
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundService.playPop();
+                        if (onOpenSettings) onOpenSettings();
+                      }}
+                      title="Click to view/switch AI Model & Open Weights"
+                      className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-[10px] text-amber-300 font-mono transition-colors cursor-pointer"
+                    >
+                      <Cpu className="w-3 h-3 text-amber-400" />
+                      <span className="truncate max-w-[150px]">{activeEngineLabel}</span>
+                    </button>
+                  </div>
                   <span className="text-[10px] text-slate-400 truncate block">Dedicated to {friend.name}</span>
                 </div>
               </div>

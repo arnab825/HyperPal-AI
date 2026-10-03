@@ -45,7 +45,9 @@ export default function Navbar({
   vaultCount = 0,
   settings,
   onUpdateSettings,
-  onUpdateFriend
+  onUpdateFriend,
+  onOpenOpenAiExplainer,
+  onOpenStoryModal
 }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileDropdownRef = useRef(null);
@@ -108,6 +110,18 @@ export default function Navbar({
                 <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 shrink-0">
                   Hacktoberfest '26
                 </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundService.playPop();
+                    if (onOpenOpenAiExplainer) onOpenOpenAiExplainer();
+                  }}
+                  className="hidden md:inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all cursor-pointer group/open"
+                  title="Why Open-Source AI Matters • Hacktoberfest Weekend Challenge"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Open-Source AI Core</span>
+                </button>
               </div>
               <p className="text-[11px] text-slate-400 truncate hidden xs:block">
                 Dedicated Cheerleader for <strong className="text-slate-200">{friend.name}</strong>
@@ -234,6 +248,43 @@ export default function Navbar({
 
                   {/* Action Menu Items */}
                   <div className="space-y-1 pt-1">
+                    {/* Why Open-Source AI Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundService.playPop();
+                        setIsProfileOpen(false);
+                        if (onOpenOpenAiExplainer) onOpenOpenAiExplainer();
+                      }}
+                      className="w-full p-2.5 rounded-xl text-left text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800/80 flex items-center justify-between transition-all cursor-pointer group/openai"
+                    >
+                      <span className="flex items-center gap-2">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 group-hover/openai:scale-110 transition-transform" />
+                        <span>Why Open-Source AI?</span>
+                      </span>
+                      <span className="text-[10px] text-emerald-300 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                        Offline & Private
+                      </span>
+                    </button>
+
+                    {/* Story of Friend Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundService.playPop();
+                        setIsProfileOpen(false);
+                        if (onOpenStoryModal) onOpenStoryModal();
+                      }}
+                      className="w-full p-2.5 rounded-xl text-left text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800/80 flex items-center justify-between transition-all cursor-pointer group/story"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400/20 group-hover/story:scale-110 transition-transform" />
+                        <span>Story: Why We Built for {friend.name}</span>
+                      </span>
+                      <span className="text-[10px] text-pink-300 bg-pink-500/10 border border-pink-500/20 px-1.5 py-0.5 rounded">
+                        story
+                      </span>
+                    </button>
                     {/* Settings & AI Configuration Button */}
                     <button
                       type="button"
