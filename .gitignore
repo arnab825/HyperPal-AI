@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Drafts & Hackathon Submissions
+SUBMISSION_POST.md
+
