@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import confetti from 'canvas-confetti';
 import { 
   Trophy, Plus, Trash2, Award, Sparkles, Filter, Copy, Check, 
@@ -140,6 +141,27 @@ export default function VictoryVault({
   const [showArmorModal, setShowArmorModal] = useState(false);
 
   const [speakingId, setSpeakingId] = useState(null);
+  const [copiedWinId, setCopiedWinId] = useState(null);
+
+  const isAnyModalOpen = Boolean(
+    showTotalWinsModal || 
+    showStreakModal || 
+    showRankModal || 
+    showArmorModal || 
+    selectedWin || 
+    showAddForm
+  );
+
+  // Prevent background scrolling and double scrollbars on both desktop and mobile
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isAnyModalOpen]);
 
   const closeAllModals = () => {
     setShowTotalWinsModal(false);
@@ -147,8 +169,8 @@ export default function VictoryVault({
     setShowRankModal(false);
     setShowArmorModal(false);
     setSelectedWin(null);
+    setShowAddForm(false);
   };
-  const [copiedWinId, setCopiedWinId] = useState(null);
 
   const streakStats = useMemo(() => calculateStreakStats(wins), [wins]);
 
@@ -205,7 +227,7 @@ export default function VictoryVault({
       const query = searchQuery.trim().toLowerCase();
       const matchesSearch =
         !query ||
-        win.title.toLowerCase().includes(query) ||
+        (win.title && win.title.toLowerCase().includes(query)) ||
         (win.content && win.content.toLowerCase().includes(query));
 
       return matchesCategory && matchesSearch;
@@ -216,7 +238,6 @@ export default function VictoryVault({
     setIsPolishingAi(true);
     soundService.playPop();
 
-    // If user hasn't entered a title yet, choose a high-impact default title for the category
     const defaultTitles = {
       coding: 'Completed System Design Mock Screening',
       career: 'Passed Multi-Round Technical Interview',
@@ -288,7 +309,7 @@ export default function VictoryVault({
       onPrefillCard({
         to: friend.name,
         from: 'Your Biggest Fan',
-        msg: "Huge congratulations on your breakthrough: \"" + newTitle.trim() + "\"! " + (newContent ? newContent.trim() : 'Undeniable proof that you belong in the arena.'),
+        msg: "Huge congratulations on your breakthrough: \"" + newTitle.trim() + "\"!" + (newContent ? ' ' + newContent.trim() : ' Undeniable proof that you belong in the arena.'),
         theme: newCategory === 'coding' ? 'cyber' : newCategory === 'career' ? 'solar' : 'sunset',
         icon: '🏆',
         badge: 'Victory Verified',
@@ -365,13 +386,13 @@ export default function VictoryVault({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fadeIn">
+    <div className="space-y-5 sm:space-y-8 animate-fadeIn">
       {/* Header Banner */}
-      <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-950/40 relative overflow-hidden">
+      <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-7 md:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-950/40 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-[11px] sm:text-xs font-semibold">
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+              <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <span>Evidence Against Imposter Syndrome</span>
             </div>
             <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight font-['Outfit']">
@@ -382,11 +403,12 @@ export default function VictoryVault({
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             <button
               onClick={() => {
                 soundService.playPop();
-                setShowAddForm(!showAddForm);
+                closeAllModals();
+                setShowAddForm(true);
                 if (filterCategory !== 'all') setNewCategory(filterCategory);
               }}
               className="py-2.5 sm:py-3 px-4 sm:px-5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
@@ -408,8 +430,8 @@ export default function VictoryVault({
         </div>
       </div>
 
-      {/* ALL 4 STAT CARDS FULLY CLICKABLE WITH DEEP MATHEMATICAL TRANSPARENCY */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* ALL 4 STAT CARDS - FULLY RESPONSIVE ON MOBILE & DESKTOP */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Stat 1: Total Wins */}
         <button
           type="button"
@@ -419,20 +441,22 @@ export default function VictoryVault({
             setShowTotalWinsModal(true);
             confetti({ particleCount: 30, spread: 50, origin: { y: 0.3 } });
           }}
-          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-amber-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
+          className="p-3 sm:p-4 rounded-2xl glass-card border border-slate-800 hover:border-amber-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
         >
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <div className="flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-              <span>Total Wins</span>
+          <div className="flex items-center justify-between text-slate-400 text-[11px] sm:text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Total Wins</span>
             </div>
-            <span className="text-[10px] text-amber-400/80 font-mono">View ↗</span>
+            <span className="text-[10px] text-amber-400/80 font-mono shrink-0 ml-1">View ↗</span>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-white">{wins.length}</p>
-          <span className="text-[10px] text-amber-400/80 group-hover:underline">Click for category analytics</span>
+          <p className="text-xl sm:text-3xl font-black text-white">{wins.length}</p>
+          <span className="text-[10px] text-amber-400/80 group-hover:underline block truncate mt-0.5">
+            Click for analytics
+          </span>
         </button>
 
-        {/* Stat 2: Hype Streak (Mathematical Calendar Calculation) */}
+        {/* Stat 2: Hype Streak */}
         <button
           type="button"
           onClick={() => {
@@ -441,20 +465,20 @@ export default function VictoryVault({
             setShowStreakModal(true);
             confetti({ particleCount: 40, spread: 60, origin: { y: 0.3 } });
           }}
-          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-orange-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
+          className="p-3 sm:p-4 rounded-2xl glass-card border border-slate-800 hover:border-orange-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
         >
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <div className="flex items-center gap-1.5">
-              <Flame className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
-              <span>Hype Streak</span>
+          <div className="flex items-center justify-between text-slate-400 text-[11px] sm:text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Streak</span>
             </div>
-            <span className="text-[10px] text-orange-400/80 font-mono">Math ↗</span>
+            <span className="text-[10px] text-orange-400/80 font-mono shrink-0 ml-1">Math ↗</span>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-orange-400">
+          <p className="text-xl sm:text-3xl font-black text-orange-400">
             {streakStats.currentStreak > 0 ? streakStats.currentStreak : streakStats.longestStreak} { (streakStats.currentStreak > 0 ? streakStats.currentStreak : streakStats.longestStreak) === 1 ? 'Day' : 'Days' }
           </p>
-          <span className="text-[10px] text-orange-400/80 group-hover:underline">
-            {streakStats.isStreakActive ? 'Active Momentum 🔥' : streakStats.longestStreak > 0 ? 'Best Streak (Log today to reignite)' : 'Start your streak today'}
+          <span className="text-[10px] text-orange-400/80 group-hover:underline block truncate mt-0.5">
+            {streakStats.isStreakActive ? 'Active Momentum 🔥' : streakStats.longestStreak > 0 ? 'Peak Streak Record' : 'Start streak today'}
           </span>
         </button>
 
@@ -466,23 +490,27 @@ export default function VictoryVault({
             closeAllModals();
             setShowRankModal(true);
           }}
-          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-purple-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
+          className="p-3 sm:p-4 rounded-2xl glass-card border border-slate-800 hover:border-purple-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
         >
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
-              <span>Rank</span>
+          <div className="flex items-center justify-between text-slate-400 text-[11px] sm:text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Rank</span>
             </div>
-            <span className="text-[10px] text-purple-400/80 font-mono">Roadmap ↗</span>
+            <span className="text-[10px] text-purple-400/80 font-mono shrink-0 ml-1">Roadmap ↗</span>
           </div>
-          <p className="text-base sm:text-lg font-black text-purple-300 flex items-center gap-1.5 truncate">
-            <span>{currentRank.badge}</span>
-            <span>{currentRank.name}</span>
-          </p>
-          <span className="text-[10px] text-purple-400/80 group-hover:underline">Click to view roadmap</span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-base sm:text-xl shrink-0">{currentRank.badge}</span>
+            <span className="text-xs sm:text-base font-extrabold text-purple-300 truncate">
+              {currentRank.name}
+            </span>
+          </div>
+          <span className="text-[10px] text-purple-400/80 group-hover:underline block truncate mt-0.5">
+            Click to view roadmap
+          </span>
         </button>
 
-        {/* Stat 4: Mindset Armor (Clickable Modal) */}
+        {/* Stat 4: Mindset Armor */}
         <button
           type="button"
           onClick={() => {
@@ -491,171 +519,30 @@ export default function VictoryVault({
             setShowArmorModal(true);
             confetti({ particleCount: 30, spread: 50, origin: { y: 0.3 } });
           }}
-          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-emerald-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
+          className="p-3 sm:p-4 rounded-2xl glass-card border border-slate-800 hover:border-emerald-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
         >
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-              <span>Mindset Armor</span>
+          <div className="flex items-center justify-between text-slate-400 text-[11px] sm:text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Armor</span>
             </div>
-            <span className="text-[10px] text-emerald-400/80 font-mono">Shield ↗</span>
+            <span className="text-[10px] text-emerald-400/80 font-mono shrink-0 ml-1">Shield ↗</span>
           </div>
-          <p className="text-base sm:text-lg font-black text-emerald-400 truncate">
-            {armorTier.name}
-          </p>
-          <span className="text-[10px] text-emerald-400/80 group-hover:underline">
-            {armorTier.rating} Imposter Defense • Details
+          <div className="flex items-center min-w-0">
+            <span className="text-xs sm:text-base font-extrabold text-emerald-400 truncate">
+              {armorTier.name}
+            </span>
+          </div>
+          <span className="text-[10px] text-emerald-400/80 group-hover:underline block truncate mt-0.5">
+            {armorTier.rating} Defense • Details
           </span>
         </button>
       </div>
 
-      {/* Add Win Form Collapsible with Optional AI Polish & Send Card to Friend */}
-      {showAddForm && (
-        <form onSubmit={handleCreateWin} className="p-5 sm:p-6 rounded-3xl glass-panel border border-amber-500/30 space-y-4 animate-fadeIn">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <h3 className="text-sm sm:text-base font-bold text-white">Record a New Victory for {friend.name}</h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowAddForm(false)}
-              className="text-slate-400 hover:text-slate-200 p-1 cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                Milestone Title *
-              </label>
-              <input
-                type="text"
-                required
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="e.g. Completed System Design Mock Screening"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-amber-400"
-              />
-              <div className="flex items-center gap-1.5 pt-1.5 overflow-x-auto scrollbar-none text-[11px]">
-                <span className="text-slate-500 text-[10px] shrink-0 font-medium">💡 Quick ideas:</span>
-                {[
-                  { t: 'Completed System Design Mock Screening', c: 'coding', d: 'Navigated tough architectural questions and kept composure under pressure.' },
-                  { t: 'Solved Stubborn Race Condition Bug', c: 'coding', d: 'Persisted through 6 hours of debugging, isolated the race condition, and shipped a mutex lock.' },
-                  { t: 'Passed Live Technical Phone Screen', c: 'career', d: 'Communicated clearly with engineering manager and solved live coding challenge.' },
-                  { t: 'Protected Rest & Reset Mental Focus', c: 'wellness', d: 'Took a deliberate recharge break instead of burning out, returning with 2x clarity.' },
-                ].map((preset, pIdx) => (
-                  <button
-                    key={pIdx}
-                    type="button"
-                    onClick={() => {
-                      soundService.playPop();
-                      setNewTitle(preset.t);
-                      setNewCategory(preset.c);
-                      setNewContent(preset.d);
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-amber-300 text-[10px] whitespace-nowrap cursor-pointer transition-all"
-                  >
-                    {preset.t.split(' ').slice(0, 3).join(' ')}...
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                  Category
-                </label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-amber-400"
-                >
-                  <option value="coding">💻 Code & Tech</option>
-                  <option value="career">💼 Career & Interviews</option>
-                  <option value="wellness">🌸 Wellness & Balance</option>
-                  <option value="life">🌟 Life & Resilience</option>
-                </select>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Quick Details / Breakthrough
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handlePolishWithAi}
-                    disabled={isPolishingAi}
-                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-[11px] font-bold text-amber-300 hover:text-amber-200 flex items-center gap-1.5 cursor-pointer shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                    title="Generate or polish victory breakthrough with AI"
-                  >
-                    {isPolishingAi ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
-                        <span>Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{newTitle.trim() ? '✨ Polish with AI' : '✨ Auto-Fill with AI'}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  placeholder="e.g. Navigated tough questions and kept composure"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-
-            {/* User choice: Send to Friend as Cheer Card */}
-            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between gap-3">
-              <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={alsoSendPostcard}
-                  onChange={(e) => setAlsoSendPostcard(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-700 text-amber-500 focus:ring-amber-400 accent-amber-500 cursor-pointer"
-                />
-                <span>💌 Also send this victory as a Cheer Card to <strong>{friend.name}</strong></span>
-              </label>
-              <span className="text-[10px] text-slate-500">
-                {alsoSendPostcard ? 'Will prefill card in Postcard studio' : 'Vault-only entry'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowAddForm(false)}
-              className="py-2 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="py-2.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Save into Vault</span>
-            </button>
-          </div>
-        </form>
-      )}
-
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-2xl glass-card">
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-2xl glass-card">
+        {/* Category Pills with horizontal touch scroll */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none touch-pan-x">
           {categories.map((c) => {
             const isActive = filterCategory === c.id;
             const count = categoryCounts[c.id] || 0;
@@ -666,15 +553,15 @@ export default function VictoryVault({
                   soundService.playPop();
                   setFilterCategory(c.id);
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                className={"px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap " + (
                   isActive
                     ? c.activeStyle
                     : 'bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800'
-                }`}
+                )}
               >
                 <span>{c.emoji}</span>
                 <span>{c.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-black/20 text-current' : 'bg-slate-800 text-slate-400'}`}>
+                <span className={"text-[10px] px-1.5 py-0.2 rounded-full " + (isActive ? 'bg-black/20 text-current' : 'bg-slate-800 text-slate-400')}>
                   {count}
                 </span>
               </button>
@@ -683,7 +570,7 @@ export default function VictoryVault({
         </div>
 
         {/* Search */}
-        <div className="relative min-w-[200px] sm:min-w-[240px]">
+        <div className="relative min-w-0 sm:min-w-[220px]">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
@@ -705,23 +592,23 @@ export default function VictoryVault({
 
       {/* Wins Grid */}
       {filteredWins.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredWins.map((win) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+          {filteredWins.map((win, idx) => {
             const isSpeaking = speakingId === win.id;
             const isCopied = copiedWinId === win.id;
 
             return (
               <div
-                key={win.id || win.title}
+                key={win.id || (win.title + idx)}
                 onClick={() => {
                   soundService.playChime();
                   closeAllModals();
                   setSelectedWin(win);
                 }}
-                className="p-5 rounded-2xl glass-card border border-slate-800/80 hover:border-amber-500/50 hover:bg-slate-900/80 transition-all flex flex-col justify-between group space-y-3 relative cursor-pointer hover:-translate-y-1 hover:shadow-xl shadow-slate-950/40"
+                className="p-4 sm:p-5 rounded-2xl glass-card border border-slate-800/80 hover:border-amber-500/50 hover:bg-slate-900/80 transition-all flex flex-col justify-between group space-y-3 relative cursor-pointer hover:-translate-y-0.5 shadow-md shadow-slate-950/40"
               >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -730,26 +617,26 @@ export default function VictoryVault({
                         setFilterCategory(win.category?.toLowerCase() || 'coding');
                       }}
                       title={"Filter by " + win.category}
-                      className={"text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-all cursor-pointer hover:scale-105 " + getCategoryBadgeStyle(win.category)}
+                      className={"text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-all cursor-pointer hover:scale-105 shrink-0 " + getCategoryBadgeStyle(win.category)}
                     >
                       {win.category}
                     </button>
-                    <span className="text-[11px] text-slate-500 font-mono">{win.date}</span>
+                    <span className="text-[11px] text-slate-500 font-mono truncate">{win.date}</span>
                   </div>
 
-                  <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-2">
+                  <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-2 leading-snug">
                     {win.title}
                   </h4>
 
                   {win.content && (
-                    <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed line-clamp-4">
+                    <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed line-clamp-3">
                       {win.content}
                     </p>
                   )}
                 </div>
 
                 {/* Card Quick Actions */}
-                <div className="pt-2.5 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+                <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
                   <span className="text-[10px] text-amber-400/80 group-hover:underline flex items-center gap-1 font-medium">
                     <span>Click to inspect</span>
                     <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
@@ -797,7 +684,7 @@ export default function VictoryVault({
           })}
         </div>
       ) : (
-        <div className="text-center py-12 px-4 rounded-3xl glass-card border-dashed border-slate-800 space-y-4 animate-fadeIn">
+        <div className="text-center py-10 sm:py-12 px-4 rounded-3xl glass-card border-dashed border-slate-800 space-y-4 animate-fadeIn">
           <Trophy className="w-12 h-12 text-slate-600 mx-auto" />
           <div className="space-y-1">
             <h4 className="text-base font-bold text-slate-200">
@@ -822,17 +709,185 @@ export default function VictoryVault({
         </div>
       )}
 
-      {/* MODAL 1: TOTAL WINS & CATEGORY ANALYTICS MODAL */}
-      {showTotalWinsModal && (
+      {/* ============================================================== */}
+      {/* MODAL: LOG A WIN RESPONSIVE MODAL (PORTALED TO DOCUMENT.BODY)   */}
+      {/* ============================================================== */}
+      {showAddForm && createPortal(
         <div 
-          onClick={() => setShowTotalWinsModal(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+          onClick={() => setShowAddForm(false)}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-amber-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
+            className="w-full max-w-lg max-h-[88vh] sm:max-h-[90vh] flex flex-col rounded-3xl bg-[#0a0f1d] border border-amber-500/40 shadow-2xl relative overflow-hidden"
           >
-            <div className="flex items-center justify-between">
+            {/* Fixed Header */}
+            <div className="shrink-0 p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm sm:text-base font-bold text-white font-['Outfit']">
+                  Record a New Victory for {friend.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Form Body */}
+            <form id="vault-win-form" onSubmit={handleCreateWin} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 overscroll-contain">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                  Milestone Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="e.g. Completed System Design Mock Screening"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-amber-400"
+                />
+                
+                {/* Quick Idea Chips */}
+                <div className="space-y-1 pt-1">
+                  <span className="text-[10px] font-semibold text-slate-400 block">💡 Quick Ideas to Click:</span>
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
+                    {[
+                      { t: 'Completed System Design Mock Screening', c: 'coding', d: 'Navigated tough architectural questions and kept composure under pressure.' },
+                      { t: 'Solved Stubborn Race Condition Bug', c: 'coding', d: 'Persisted through 6 hours of debugging, isolated the race condition, and shipped a mutex lock.' },
+                      { t: 'Passed Live Technical Phone Screen', c: 'career', d: 'Communicated clearly with engineering manager and solved live coding challenge.' },
+                      { t: 'Protected Rest & Reset Mental Focus', c: 'wellness', d: 'Took a deliberate recharge break instead of burning out, returning with 2x clarity.' },
+                    ].map((preset, pIdx) => (
+                      <button
+                        key={pIdx}
+                        type="button"
+                        onClick={() => {
+                          soundService.playPop();
+                          setNewTitle(preset.t);
+                          setNewCategory(preset.c);
+                          setNewContent(preset.d);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-amber-300 text-[10px] whitespace-nowrap cursor-pointer transition-all shrink-0"
+                      >
+                        {preset.t.split(' ').slice(0, 3).join(' ')}...
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Category & AI Polish in a responsive layout */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="coding">💻 Code & Tech</option>
+                    <option value="career">💼 Career & Interviews</option>
+                    <option value="wellness">🌸 Wellness & Balance</option>
+                    <option value="life">🌟 Life & Resilience</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Quick Details / Breakthrough
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handlePolishWithAi}
+                      disabled={isPolishingAi}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-[11px] font-bold text-amber-300 hover:text-amber-200 flex items-center gap-1.5 cursor-pointer shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      title="Generate or polish victory breakthrough with AI"
+                    >
+                      {isPolishingAi ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-3.5 h-3.5 text-amber-400" />
+                          <span>{newTitle.trim() ? '✨ Polish with AI' : '✨ Auto-Fill with AI'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={newContent}
+                    onChange={(e) => setNewContent(e.target.value)}
+                    placeholder="e.g. Navigated tough questions and kept composure under pressure..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-amber-400 resize-none leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              {/* Send to Friend as Cheer Card option */}
+              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={alsoSendPostcard}
+                    onChange={(e) => setAlsoSendPostcard(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-700 text-amber-500 focus:ring-amber-400 accent-amber-500 cursor-pointer"
+                  />
+                  <span>💌 Also send this victory as a Cheer Card to <strong>{friend.name}</strong></span>
+                </label>
+                <span className="text-[10px] text-slate-500 pl-6 sm:pl-0">
+                  {alsoSendPostcard ? 'Will prefill Postcard studio' : 'Vault-only entry'}
+                </span>
+              </div>
+            </form>
+
+            {/* Fixed Footer */}
+            <div className="shrink-0 p-3.5 sm:p-4 border-t border-slate-800/80 bg-slate-950/70 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="py-2 px-4 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="vault-win-form"
+                className="py-2.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Save into Vault</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL 1: TOTAL WINS & CATEGORY ANALYTICS MODAL                 */}
+      {/* ============================================================== */}
+      {showTotalWinsModal && createPortal(
+        <div 
+          onClick={() => setShowTotalWinsModal(false)}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-3xl bg-[#0a0f1d] border border-amber-500/40 shadow-2xl relative overflow-hidden"
+          >
+            {/* Fixed Header */}
+            <div className="shrink-0 p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-amber-400" />
                 <h3 className="text-base sm:text-lg font-bold text-white font-['Outfit']">
@@ -847,91 +902,99 @@ export default function VictoryVault({
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-amber-300 font-medium">Total Evidence Entries</p>
-                <p className="text-3xl font-black text-white">{wins.length} Breakthroughs</p>
+            {/* Scrollable Content Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 overscroll-contain">
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-amber-300 font-medium">Total Evidence Entries</p>
+                  <p className="text-2xl sm:text-3xl font-black text-white">{wins.length} Breakthroughs</p>
+                </div>
+                <span className="text-3xl">🏆</span>
               </div>
-              <span className="text-3xl">🏆</span>
+
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Breakdown by Domain
+                </h4>
+                <div className="space-y-2.5">
+                  {[
+                    { label: 'Code & Tech', count: categoryCounts.coding, color: 'bg-cyan-500', text: 'text-cyan-400', id: 'coding', icon: '💻' },
+                    { label: 'Career & Interviews', count: categoryCounts.career, color: 'bg-indigo-500', text: 'text-indigo-400', id: 'career', icon: '💼' },
+                    { label: 'Wellness & Stamina', count: categoryCounts.wellness, color: 'bg-pink-500', text: 'text-pink-400', id: 'wellness', icon: '🌸' },
+                    { label: 'Life & Resilience', count: categoryCounts.life, color: 'bg-emerald-500', text: 'text-emerald-400', id: 'life', icon: '🌟' },
+                  ].map((item) => {
+                    const percent = wins.length > 0 ? Math.round((item.count / wins.length) * 100) : 0;
+                    return (
+                      <div 
+                        key={item.id}
+                        onClick={() => {
+                          setFilterCategory(item.id);
+                          setShowTotalWinsModal(false);
+                        }}
+                        className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <span className="font-semibold text-slate-200 flex items-center gap-1.5">
+                            <span>{item.icon}</span>
+                            <span className="group-hover:text-amber-300 transition-colors">{item.label}</span>
+                          </span>
+                          <span className="font-mono text-slate-400">
+                            <strong className={item.text}>{item.count}</strong> ({percent}%)
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                          <div 
+                            className={"h-full " + item.color + " rounded-full transition-all duration-500"}
+                            style={{ width: percent + "%" }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Breakdown by Domain
-              </h4>
-              <div className="space-y-2.5">
-                {[
-                  { label: 'Code & Tech', count: categoryCounts.coding, color: 'bg-cyan-500', text: 'text-cyan-400', id: 'coding', icon: '💻' },
-                  { label: 'Career & Interviews', count: categoryCounts.career, color: 'bg-indigo-500', text: 'text-indigo-400', id: 'career', icon: '💼' },
-                  { label: 'Wellness & Stamina', count: categoryCounts.wellness, color: 'bg-pink-500', text: 'text-pink-400', id: 'wellness', icon: '🌸' },
-                  { label: 'Life & Resilience', count: categoryCounts.life, color: 'bg-emerald-500', text: 'text-emerald-400', id: 'life', icon: '🌟' },
-                ].map((item) => {
-                  const percent = wins.length > 0 ? Math.round((item.count / wins.length) * 100) : 0;
-                  return (
-                    <div 
-                      key={item.id}
-                      onClick={() => {
-                        setFilterCategory(item.id);
-                        setShowTotalWinsModal(false);
-                      }}
-                      className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group"
-                    >
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="font-semibold text-slate-200 flex items-center gap-1.5">
-                          <span>{item.icon}</span>
-                          <span className="group-hover:text-amber-300 transition-colors">{item.label}</span>
-                        </span>
-                        <span className="font-mono text-slate-400">
-                          <strong className={item.text}>{item.count}</strong> ({percent}%)
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                        <div 
-                          className={"h-full " + item.color + " rounded-full transition-all duration-500"}
-                          style={{ width: percent + "%" }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-3">
+            {/* Fixed Footer */}
+            <div className="shrink-0 p-3.5 sm:p-4 border-t border-slate-800/80 bg-slate-950/70 flex items-center justify-between gap-2.5">
               <button
                 type="button"
                 onClick={() => {
                   setFilterCategory('all');
                   setShowTotalWinsModal(false);
                 }}
-                className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer"
+                className="py-2 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer"
               >
                 View All in Vault
               </button>
               <button
                 type="button"
                 onClick={handleExportBragSheet}
-                className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+                className="py-2 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
               >
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? 'Brag Sheet Copied!' : 'Export Brag Sheet'}</span>
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* MODAL 2: MATHEMATICAL STREAK & MOMENTUM ENGINE MODAL */}
-      {showStreakModal && (
+      {/* ============================================================== */}
+      {/* MODAL 2: MATHEMATICAL STREAK & MOMENTUM ENGINE MODAL           */}
+      {/* ============================================================== */}
+      {showStreakModal && createPortal(
         <div 
           onClick={() => setShowStreakModal(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-orange-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
+            className="w-full max-w-lg max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-3xl bg-[#0a0f1d] border border-orange-500/40 shadow-2xl relative overflow-hidden"
           >
-            <div className="flex items-center justify-between">
+            {/* Fixed Header */}
+            <div className="shrink-0 p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
               <div className="flex items-center gap-2">
                 <Flame className="w-5 h-5 text-orange-400" />
                 <h3 className="text-base sm:text-lg font-bold text-white font-['Outfit']">
@@ -946,101 +1009,111 @@ export default function VictoryVault({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-orange-400">Current Streak</span>
-                <p className="text-3xl font-black text-white mt-1">
-                  {streakStats.currentStreak} {streakStats.currentStreak === 1 ? 'Day' : 'Days'}
-                </p>
-                <span className="text-[10px] text-orange-300">
-                  {streakStats.isStreakActive ? '🔥 Active consecutive streak' : '⚪ Grace period or paused'}
-                </span>
+            {/* Scrollable Content Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 overscroll-contain">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20">
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-orange-400">Current Streak</span>
+                  <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">
+                    {streakStats.currentStreak} {streakStats.currentStreak === 1 ? 'Day' : 'Days'}
+                  </p>
+                  <span className="text-[10px] text-orange-300 block truncate">
+                    {streakStats.isStreakActive ? '🔥 Active momentum' : '⚪ Grace period'}
+                  </span>
+                </div>
+
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-400">All-Time Longest</span>
+                  <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">
+                    {streakStats.longestStreak} {streakStats.longestStreak === 1 ? 'Day' : 'Days'}
+                  </p>
+                  <span className="text-[10px] text-amber-300 block truncate">⚡ Peak resilience</span>
+                </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">All-Time Longest</span>
-                <p className="text-3xl font-black text-white mt-1">
-                  {streakStats.longestStreak} {streakStats.longestStreak === 1 ? 'Day' : 'Days'}
-                </p>
-                <span className="text-[10px] text-amber-300">⚡ Peak resilience record</span>
-              </div>
-            </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-300 uppercase tracking-wider">Last 7 Calendar Days</span>
+                  <span className="text-slate-400 font-mono text-[11px]">{streakStats.consistencyRate}% active (14-day)</span>
+                </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-300 uppercase tracking-wider">Last 7 Calendar Days</span>
-                <span className="text-slate-400 font-mono text-[11px]">{streakStats.consistencyRate}% active (14-day)</span>
-              </div>
-
-              <div className="grid grid-cols-7 gap-1.5 p-3 rounded-2xl bg-slate-900/90 border border-slate-800">
-                {streakStats.recentWeekMatrix.map((item, idx) => (
-                  <div 
-                    key={idx}
-                    className={"flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all " + (
-                      item.hasWin
-                        ? 'bg-orange-500/20 border-orange-500/40 text-orange-300 shadow-md shadow-orange-500/20'
-                        : item.isToday
-                        ? 'bg-slate-800/80 border-slate-700 text-slate-300'
-                        : 'bg-slate-950/40 border-slate-900 text-slate-600'
-                    )}
-                  >
-                    <span className="text-[10px] font-mono">{item.dayName}</span>
-                    <span className="text-lg my-0.5">{item.hasWin ? '🔥' : '⚪'}</span>
-                    <span className="text-[9px] font-mono text-slate-400">{item.dateLabel.split(' ')[1]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 space-y-1.5">
-              <div className="flex items-center gap-1.5 font-bold text-slate-200">
-                <Info className="w-3.5 h-3.5 text-orange-400" />
-                <span>Deterministic Calculation Logic:</span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
-                • Standardized: Dates mapped to midnight timestamps <span className="text-amber-400 font-bold">Δt = 86,400,000 ms (24h)</span>.<br />
-                • Continuity: Consecutive days increment streak; non-consecutive days preserve all-time best.<br />
-                • Zero random generators. Every single day displayed is tied to actual recorded vault entries.
-              </p>
-            </div>
-
-            {streakStats.uniqueDaysList.length > 0 && (
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Recorded Milestone Dates ({streakStats.totalActiveDays} total active days):
-                </span>
-                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                  {streakStats.uniqueDaysList.slice(-8).reverse().map((d, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-mono">
-                      ✓ {d}
-                    </span>
+                <div className="grid grid-cols-7 gap-1 p-2 sm:p-3 rounded-2xl bg-slate-900/90 border border-slate-800">
+                  {streakStats.recentWeekMatrix.map((item, idx) => (
+                    <div 
+                      key={idx}
+                      className={"flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl border text-center transition-all " + (
+                        item.hasWin
+                          ? 'bg-orange-500/20 border-orange-500/40 text-orange-300 shadow-md shadow-orange-500/20'
+                          : item.isToday
+                          ? 'bg-slate-800/80 border-slate-700 text-slate-300'
+                          : 'bg-slate-950/40 border-slate-900 text-slate-600'
+                      )}
+                    >
+                      <span className="text-[9px] sm:text-[10px] font-mono">{item.dayName}</span>
+                      <span className="text-base sm:text-lg my-0.5">{item.hasWin ? '🔥' : '⚪'}</span>
+                      <span className="text-[8px] sm:text-[9px] font-mono text-slate-400">{item.dateLabel.split(' ')[1]}</span>
+                    </div>
                   ))}
                 </div>
               </div>
-            )}
 
-            <button
-              type="button"
-              onClick={() => setShowStreakModal(false)}
-              className="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
-            >
-              Close Streak Matrix
-            </button>
+              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-slate-200">
+                  <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                  <span>Deterministic Calculation Logic:</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
+                  • Standardized: Dates mapped to midnight timestamps <span className="text-amber-400 font-bold">Δt = 86,400,000 ms (24h)</span>.<br />
+                  • Continuity: Consecutive days increment streak; non-consecutive days preserve all-time best.<br />
+                  • Zero random generators. Every single day displayed is tied to actual recorded vault entries.
+                </p>
+              </div>
+
+              {streakStats.uniqueDaysList.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Recorded Milestone Dates ({streakStats.totalActiveDays} total active days):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                    {streakStats.uniqueDaysList.slice(-8).reverse().map((d, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-mono">
+                        ✓ {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Fixed Footer */}
+            <div className="shrink-0 p-3.5 sm:p-4 border-t border-slate-800/80 bg-slate-950/70 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowStreakModal(false)}
+                className="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+              >
+                Close Streak Matrix
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* MODAL 3: RANK ROADMAP & PROGRESSION MODAL */}
-      {showRankModal && (
+      {/* ============================================================== */}
+      {/* MODAL 3: RANK ROADMAP & PROGRESSION MODAL                      */}
+      {/* ============================================================== */}
+      {showRankModal && createPortal(
         <div 
           onClick={() => setShowRankModal(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-purple-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
+            className="w-full max-w-md max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-3xl bg-[#0a0f1d] border border-purple-500/40 shadow-2xl relative overflow-hidden"
           >
-            <div className="flex items-center justify-between">
+            {/* Fixed Header */}
+            <div className="shrink-0 p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-400" />
                 <h3 className="text-base sm:text-lg font-bold text-white font-['Outfit']">
@@ -1055,97 +1128,107 @@ export default function VictoryVault({
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-purple-500/15 border border-purple-500/30 space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Current Status</span>
-                  <h4 className="text-xl font-black text-white flex items-center gap-1.5">
-                    <span>{currentRank.badge}</span>
-                    <span>{currentRank.name}</span>
-                  </h4>
+            {/* Scrollable Content Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 overscroll-contain">
+              <div className="p-4 rounded-2xl bg-purple-500/15 border border-purple-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Current Status</span>
+                    <h4 className="text-lg sm:text-xl font-black text-white flex items-center gap-1.5">
+                      <span>{currentRank.badge}</span>
+                      <span>{currentRank.name}</span>
+                    </h4>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2 py-1 rounded bg-purple-500/30 text-purple-200">
+                    {wins.length} Wins
+                  </span>
                 </div>
-                <span className="text-xs font-mono font-bold px-2 py-1 rounded bg-purple-500/30 text-purple-200">
-                  {wins.length} Wins
-                </span>
+
+                {nextRank && (
+                  <div className="space-y-1 pt-1">
+                    <div className="flex items-center justify-between text-[11px] text-purple-200">
+                      <span>Progress to {nextRank.name}</span>
+                      <span className="font-mono">{wins.length} / {nextRank.wins} ({nextRank.wins - wins.length} left)</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                        style={{ width: rankProgress + "%" }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {nextRank && (
-                <div className="space-y-1 pt-1">
-                  <div className="flex items-center justify-between text-[11px] text-purple-200">
-                    <span>Progress to {nextRank.name}</span>
-                    <span className="font-mono">{wins.length} / {nextRank.wins} ({nextRank.wins - wins.length} left)</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
-                      style={{ width: rankProgress + "%" }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2.5">
-              {RANK_TIERS.map((tier) => {
-                const isCurrent = currentRank.name === tier.name;
-                const isUnlocked = wins.length >= tier.wins;
-                return (
-                  <div
-                    key={tier.name}
-                    className={"p-3.5 rounded-2xl border transition-all flex items-center justify-between " + (
-                      isCurrent
-                        ? 'bg-purple-500/20 border-purple-400/60 shadow-md'
-                        : isUnlocked
-                        ? 'bg-slate-900/60 border-slate-800 text-slate-300'
-                        : 'bg-slate-900/30 border-slate-900 text-slate-600'
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{tier.badge}</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className={"text-xs sm:text-sm font-bold " + (isCurrent ? 'text-purple-300' : isUnlocked ? 'text-white' : 'text-slate-500')}>
-                            {tier.name}
-                          </h4>
-                          {isCurrent && (
-                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-purple-500/30 text-purple-200">
-                              Active Tier
-                            </span>
-                          )}
+              <div className="space-y-2.5">
+                {RANK_TIERS.map((tier) => {
+                  const isCurrent = currentRank.name === tier.name;
+                  const isUnlocked = wins.length >= tier.wins;
+                  return (
+                    <div
+                      key={tier.name}
+                      className={"p-3.5 rounded-2xl border transition-all flex items-center justify-between " + (
+                        isCurrent
+                          ? 'bg-purple-500/20 border-purple-400/60 shadow-md'
+                          : isUnlocked
+                          ? 'bg-slate-900/60 border-slate-800 text-slate-300'
+                          : 'bg-slate-900/30 border-slate-900 text-slate-600'
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{tier.badge}</span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className={"text-xs sm:text-sm font-bold " + (isCurrent ? 'text-purple-300' : isUnlocked ? 'text-white' : 'text-slate-500')}>
+                              {tier.name}
+                            </h4>
+                            {isCurrent && (
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-purple-500/30 text-purple-200">
+                                Active Tier
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-400">{tier.desc}</p>
                         </div>
-                        <p className="text-[11px] text-slate-400">{tier.desc}</p>
                       </div>
+                      <span className="text-xs font-mono font-bold text-slate-400 shrink-0">
+                        {tier.wins} {tier.wins === 1 ? 'win' : 'wins'}
+                      </span>
                     </div>
-                    <span className="text-xs font-mono font-bold text-slate-400 shrink-0">
-                      {tier.wins} {tier.wins === 1 ? 'win' : 'wins'}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowRankModal(false)}
-              className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors cursor-pointer"
-            >
-              Continue Conquering
-            </button>
+            {/* Fixed Footer */}
+            <div className="shrink-0 p-3.5 sm:p-4 border-t border-slate-800/80 bg-slate-950/70 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowRankModal(false)}
+                className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors cursor-pointer"
+              >
+                Continue Conquering
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* MODAL 4: MINDSET ARMOR & RESILIENCE MODAL */}
-      {showArmorModal && (
+      {/* ============================================================== */}
+      {/* MODAL 4: MINDSET ARMOR & RESILIENCE MODAL                      */}
+      {/* ============================================================== */}
+      {showArmorModal && createPortal(
         <div 
           onClick={() => setShowArmorModal(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-emerald-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
+            className="w-full max-w-lg max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-3xl bg-[#0a0f1d] border border-emerald-500/40 shadow-2xl relative overflow-hidden"
           >
-            <div className="flex items-center justify-between">
+            {/* Fixed Header */}
+            <div className="shrink-0 p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 <h3 className="text-base sm:text-lg font-bold text-white font-['Outfit']">
@@ -1160,77 +1243,87 @@ export default function VictoryVault({
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Current Armor Tier</span>
-                <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">{armorTier.name}</p>
-                <p className="text-xs text-emerald-300 font-medium">{armorTier.status}</p>
+            {/* Scrollable Content Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 overscroll-contain">
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Current Armor Tier</span>
+                  <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">{armorTier.name}</p>
+                  <p className="text-xs text-emerald-300 font-medium">{armorTier.status}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-400">{armorTier.rating}</span>
+                  <span className="block text-[10px] text-slate-400">Defense Index</span>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-2xl sm:text-3xl font-black text-emerald-400">{armorTier.rating}</span>
-                <span className="block text-[10px] text-slate-400">Defense Index</span>
+
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Active Psychological Anchors
+                </h4>
+                <div className="space-y-2">
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
+                    <span className="text-lg">🛡️</span>
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-200">Hard Evidence Bias Defense</h5>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Imposter syndrome thrives on subjective feelings of fraudulence. Having {wins.length} concrete logged artifacts gives the prefrontal cortex objective data to refute negative cognitive distortions.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
+                    <span className="text-lg">⚡</span>
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-200">Panic-Proof Recall Memory</h5>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Under acute stress (interviews, outages), human working memory drops by 40%. The Victory Vault functions as externalized long-term memory proof that you have solved hard problems before.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
+                    <span className="text-lg">💎</span>
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-200">Agency & Resilience Armor</h5>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Each logged victory rewires neural pathways through positive reinforcement, elevating self-efficacy and confidence.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Active Psychological Anchors
-              </h4>
-              <div className="space-y-2">
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
-                  <span className="text-lg">🛡️</span>
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-200">Hard Evidence Bias Defense</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Imposter syndrome thrives on subjective feelings of fraudulence. Having {wins.length} concrete logged artifacts gives the prefrontal cortex objective data to refute negative cognitive distortions.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
-                  <span className="text-lg">⚡</span>
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-200">Panic-Proof Recall Memory</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Under acute stress (interviews, outages), human working memory drops by 40%. The Victory Vault functions as externalized long-term memory proof that you have solved hard problems before.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
-                  <span className="text-lg">💎</span>
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-200">Agency & Resilience Armor</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Each logged victory rewires neural pathways through positive reinforcement, elevating self-efficacy and confidence.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            {/* Fixed Footer */}
+            <div className="shrink-0 p-3.5 sm:p-4 border-t border-slate-800/80 bg-slate-950/70 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowArmorModal(false)}
+                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors cursor-pointer"
+              >
+                Armor Verified
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowArmorModal(false)}
-              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors cursor-pointer"
-            >
-              Armor Verified
-            </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* MODAL 5: "RELIVE THE VICTORY" DETAILED INSPECTION MODAL */}
-      {selectedWin && (
+      {/* ============================================================== */}
+      {/* MODAL 5: "RELIVE THE VICTORY" DETAILED INSPECTION MODAL        */}
+      {/* ============================================================== */}
+      {selectedWin && createPortal(
         <div 
           onClick={() => setSelectedWin(null)}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-hidden animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-[#090e17] border border-amber-500/40 p-4 sm:p-6 space-y-4 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] relative my-auto scrollbar-thin"
+            className="w-full max-w-lg max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-3xl bg-[#0a0f1d] border border-amber-500/40 shadow-2xl relative overflow-hidden"
           >
-            <div className="flex items-center justify-between">
+            {/* Fixed Header */}
+            <div className="shrink-0 p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
               <div className="flex items-center gap-2">
                 <span className={"text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border " + getCategoryBadgeStyle(selectedWin.category)}>
                   {selectedWin.category}
@@ -1245,9 +1338,10 @@ export default function VictoryVault({
               </button>
             </div>
 
-            <div className="space-y-3">
+            {/* Scrollable Content Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 overscroll-contain">
               <div className="flex items-start gap-3">
-                <span className="text-2xl p-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
+                <span className="text-2xl p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
                   🏆
                 </span>
                 <div>
@@ -1258,14 +1352,15 @@ export default function VictoryVault({
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/90 max-h-[300px] overflow-y-auto space-y-2">
+              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/90 space-y-2">
                 <p className="text-xs sm:text-sm text-slate-200 whitespace-pre-line leading-relaxed">
                   {selectedWin.content || 'Victory recorded in vault.'}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-800">
+            {/* Fixed Footer */}
+            <div className="shrink-0 p-3.5 sm:p-4 border-t border-slate-800/80 bg-slate-950/70 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
               <button
                 type="button"
                 onClick={(e) => handleSpeakWin(e, selectedWin)}
@@ -1294,7 +1389,7 @@ export default function VictoryVault({
                         onPrefillCard({
                           to: friend.name,
                           from: 'Your Biggest Fan',
-                          msg: "Celebrating your milestone: \"" + selectedWin.title + "\"! " + (selectedWin.content || 'Proof of your unstoppable momentum.'),
+                          msg: "Celebrating your milestone: \"" + selectedWin.title + "\"!" + (selectedWin.content ? ' ' + selectedWin.content : ' Proof of your unstoppable momentum.'),
                           theme: selectedWin.category === 'coding' ? 'cyber' : selectedWin.category === 'career' ? 'solar' : 'sunset',
                           icon: '⚡',
                           badge: 'Victory Verified',
@@ -1313,7 +1408,8 @@ export default function VictoryVault({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

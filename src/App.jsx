@@ -79,6 +79,18 @@ export default function App() {
   const [isOpenAiModalOpen, setIsOpenAiModalOpen] = useState(false);
   const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
 
+  // Prevent background scroll and double scrollbars when global modals are active
+  useEffect(() => {
+    const isAnyGlobalModalOpen = isFriendModalOpen || isSettingsModalOpen || isOpenAiModalOpen || isStoryModalOpen;
+    if (isAnyGlobalModalOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isFriendModalOpen, isSettingsModalOpen, isOpenAiModalOpen, isStoryModalOpen]);
+
   // Friend state with localStorage persistence
   const [friend, setFriend] = useState(() => {
     try {
@@ -172,7 +184,7 @@ export default function App() {
       />
 
       {/* Main Content Area with mobile bottom padding */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 pb-28 md:pb-12 relative z-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 pb-28 md:pb-12 relative">
         {activeTab === 'hype' && (
           <HypeGenerator
             friend={friend}
