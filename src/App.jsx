@@ -199,6 +199,11 @@ export default function App() {
             onDeleteWin={handleDeleteWin}
             friend={friend}
             onNavigateTab={setActiveTab}
+            settings={settings}
+            onPrefillCard={(cardData) => {
+              setSharedCard(cardData);
+              setActiveTab('postcard');
+            }}
           />
         )}
 

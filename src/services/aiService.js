@@ -424,6 +424,59 @@ Strict Rules:
   return fallbacks[occasion] || `You are 100x smarter, sharper, and more resilient than your nervous brain is letting you believe today. Take one step at a time—I'm rooting for you always! ⚡`;
 }
 
+// Polish Victory Milestone with AI (or Offline Enhancement)
+export async function polishVictoryMilestone({
+  title,
+  details = '',
+  category = 'coding',
+  friendName = 'Alex',
+  apiKey = '',
+  apiEndpoint = '',
+  model = '',
+  provider = '',
+}) {
+  const creds = resolveCredentials(apiKey, apiEndpoint, model, provider);
+  const prompt = "You are an elite career mentor and hype writer.\n" +
+    "Transform this milestone logged for " + friendName + " into an empowering, articulate brag-sheet victory highlight (1-2 punchy sentences) that dismantles imposter syndrome.\n" +
+    "Milestone: \"" + title + "\"\n" +
+    "Category: \"" + category + "\"\n" +
+    "Details: \"" + (details || "Successfully conquered the obstacle and achieved the milestone.") + "\"\n\n" +
+    "Return ONLY the polished highlight text without quotes, markdown headers, or preambles.";
+
+  if (creds.provider === 'groq' && creds.activeKey) {
+    const res = await callOpenAICompatible({
+      endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+      apiKey: creds.activeKey,
+      model: creds.activeModel || 'qwen/qwen3.8-27b',
+      prompt,
+      isJson: false,
+    });
+    if (res) return res.trim();
+  }
+
+  if ((creds.provider === 'gemini' || !creds.activeKey) && (creds.activeKey || import.meta.env.VITE_GEMINI_API_KEY)) {
+    const geminiKey = creds.activeKey || import.meta.env.VITE_GEMINI_API_KEY;
+    const res = await callGemini({
+      apiKey: geminiKey,
+      prompt,
+      model: creds.activeModel || 'gemini-3.8-flash',
+      isJson: false,
+    });
+    if (res) return res.trim();
+  }
+
+  await new Promise(r => setTimeout(r, 350));
+  const base = details ? details.trim() : 'Faced the challenge head-on and achieved the goal.';
+  if (category === 'coding') {
+    return base + ' — Demonstrated formidable problem-solving resilience by diagnosing the core bottleneck and shipping a dependable solution.';
+  } else if (category === 'career') {
+    return base + ' — Embraced constructive pressure, showcased genuine competence, and established undeniable proof of high-agency capability.';
+  } else if (category === 'wellness') {
+    return base + ' — Actively defended mental clarity, prioritized sustainable stamina, and proved that rest is an essential pillar of mastery.';
+  }
+  return base + ' — Refused to let self-doubt dictate the outcome, translating determination into hard evidence of growth.';
+}
+
 // Cognitive Reframing Engine with Groq / Gemini / Offline CBT
 export async function reframeThought({ thought, friendName = 'Alex', apiKey = '', apiEndpoint = '', model = '', provider = '' }) {
   const creds = resolveCredentials(apiKey, apiEndpoint, model, provider);

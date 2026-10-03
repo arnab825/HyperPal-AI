@@ -2,32 +2,147 @@ import React, { useState, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { 
   Trophy, Plus, Trash2, Award, Sparkles, Filter, Copy, Check, 
-  Flame, Search, X, Volume2, VolumeX, Send, ArrowRight, ShieldCheck, Heart 
+  Flame, Search, X, Volume2, VolumeX, Send, ArrowRight, ShieldCheck, Heart,
+  Calendar, Zap, TrendingUp, CheckCircle2, Shield, Info, Wand2, Loader2
 } from 'lucide-react';
 import { soundService } from '../services/soundService';
 import { speechService } from '../services/speechService';
+import { polishVictoryMilestone } from '../services/aiService';
 
 const RANK_TIERS = [
-  { wins: 1, name: 'Spark Starter', badge: '🌱', desc: 'Took the first step to log a milestone' },
-  { wins: 3, name: 'Rising Warrior', badge: '⚔️', desc: 'Overcoming doubts with repeated evidence' },
-  { wins: 5, name: 'Unstoppable Titan', badge: '⚡', desc: 'Formidable track record of resilience' },
-  { wins: 10, name: 'Mythic Architect', badge: '👑', desc: 'Mastery over imposter syndrome' },
+  { wins: 1, name: 'Spark Starter', badge: '🌱', desc: 'Took the first brave step to log proof of capability' },
+  { wins: 3, name: 'Rising Warrior', badge: '⚔️', desc: 'Overcoming self-doubt with persistent evidence' },
+  { wins: 5, name: 'Unstoppable Titan', badge: '⚡', desc: 'Formidable track record of technical resilience' },
+  { wins: 10, name: 'Mythic Architect', badge: '👑', desc: 'Total mastery and immunity over imposter syndrome' },
 ];
 
-export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend, onNavigateTab }) {
+export function parseDateToMidnight(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+export function calculateStreakStats(wins = []) {
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayMidnight = todayMidnight - ONE_DAY_MS;
+
+  const uniqueTimestamps = Array.from(new Set(
+    wins
+      .map(w => parseDateToMidnight(w.date || w.createdAt))
+      .filter(Boolean)
+  )).sort((a, b) => a - b);
+
+  if (uniqueTimestamps.length === 0) {
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      totalActiveDays: 0,
+      isStreakActive: false,
+      isTodayLogged: false,
+      isYesterdayLogged: false,
+      uniqueDaysList: [],
+      recentWeekMatrix: [],
+      consistencyRate: 0,
+    };
+  }
+
+  let longestStreak = 1;
+  let tempStreak = 1;
+  for (let i = 1; i < uniqueTimestamps.length; i++) {
+    const diff = Math.round((uniqueTimestamps[i] - uniqueTimestamps[i - 1]) / ONE_DAY_MS);
+    if (diff === 1) {
+      tempStreak += 1;
+      if (tempStreak > longestStreak) longestStreak = tempStreak;
+    } else if (diff > 1) {
+      tempStreak = 1;
+    }
+  }
+
+  const isTodayLogged = uniqueTimestamps.includes(todayMidnight);
+  const isYesterdayLogged = uniqueTimestamps.includes(yesterdayMidnight);
+
+  let currentStreak = 0;
+  if (isTodayLogged || isYesterdayLogged) {
+    const anchor = isTodayLogged ? todayMidnight : yesterdayMidnight;
+    currentStreak = 1;
+    let expected = anchor - ONE_DAY_MS;
+    for (let i = uniqueTimestamps.length - 1; i >= 0; i--) {
+      const t = uniqueTimestamps[i];
+      if (t === anchor) continue;
+      if (t === expected) {
+        currentStreak += 1;
+        expected -= ONE_DAY_MS;
+      } else if (t < expected) {
+        break;
+      }
+    }
+  }
+
+  const recentWeekMatrix = [];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  for (let offset = 6; offset >= 0; offset--) {
+    const d = new Date(todayMidnight - offset * ONE_DAY_MS);
+    const dayMidnight = d.getTime();
+    const hasWin = uniqueTimestamps.includes(dayMidnight);
+    recentWeekMatrix.push({
+      dayName: dayNames[d.getDay()],
+      dateLabel: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      hasWin,
+      isToday: offset === 0,
+    });
+  }
+
+  const fourteenDaysAgo = todayMidnight - 13 * ONE_DAY_MS;
+  const activeLast14 = uniqueTimestamps.filter(t => t >= fourteenDaysAgo).length;
+  const consistencyRate = Math.min(100, Math.round((activeLast14 / 14) * 100));
+
+  return {
+    currentStreak,
+    longestStreak: Math.max(longestStreak, currentStreak),
+    totalActiveDays: uniqueTimestamps.length,
+    isStreakActive: currentStreak > 0,
+    isTodayLogged,
+    isYesterdayLogged,
+    uniqueDaysList: uniqueTimestamps.map(t => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })),
+    recentWeekMatrix,
+    consistencyRate,
+  };
+}
+
+export default function VictoryVault({ 
+  wins = [], 
+  onAddWin, 
+  onDeleteWin, 
+  friend, 
+  onNavigateTab, 
+  settings = {},
+  onPrefillCard 
+}) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [newCategory, setNewCategory] = useState('coding');
+  const [alsoSendPostcard, setAlsoSendPostcard] = useState(false);
+  const [isPolishingAi, setIsPolishingAi] = useState(false);
+
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [copied, setCopied] = useState(false);
 
   // Modals for deep interactivity
   const [selectedWin, setSelectedWin] = useState(null);
+  const [showTotalWinsModal, setShowTotalWinsModal] = useState(false);
+  const [showStreakModal, setShowStreakModal] = useState(false);
   const [showRankModal, setShowRankModal] = useState(false);
+  const [showArmorModal, setShowArmorModal] = useState(false);
+
   const [speakingId, setSpeakingId] = useState(null);
   const [copiedWinId, setCopiedWinId] = useState(null);
+
+  const streakStats = useMemo(() => calculateStreakStats(wins), [wins]);
 
   const categories = [
     { id: 'all', label: 'All Wins', emoji: '🏆', color: 'text-amber-400', activeStyle: 'bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/25 border-amber-400' },
@@ -54,6 +169,25 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
     return RANK_TIERS[0];
   }, [wins.length]);
 
+  const nextRank = useMemo(() => {
+    return RANK_TIERS.find(t => t.wins > wins.length) || null;
+  }, [wins.length]);
+
+  const rankProgress = useMemo(() => {
+    if (!nextRank) return 100;
+    const prevWins = currentRank.wins;
+    const needed = nextRank.wins - prevWins;
+    const progress = wins.length - prevWins;
+    return Math.min(100, Math.max(10, Math.round((progress / needed) * 100)));
+  }, [wins.length, currentRank, nextRank]);
+
+  const armorTier = useMemo(() => {
+    if (wins.length >= 5) return { name: 'Diamond Tier 💎', rating: '98%', status: 'Impenetrable Imposter Defense' };
+    if (wins.length >= 3) return { name: 'Gold Tier 🥇', rating: '85%', status: 'Robust Neurological Shield' };
+    if (wins.length >= 1) return { name: 'Silver Tier 🥈', rating: '65%', status: 'Evidence Armor Forming' };
+    return { name: 'Bronze Tier 🥉', rating: '30%', status: 'Awaiting Initial Evidence' };
+  }, [wins.length]);
+
   const filteredWins = useMemo(() => {
     return wins.filter((win) => {
       const matchesCategory =
@@ -70,20 +204,66 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
     });
   }, [wins, filterCategory, searchQuery]);
 
+  const handlePolishWithAi = async () => {
+    if (!newTitle.trim()) {
+      alert('Please enter a milestone title first!');
+      return;
+    }
+    setIsPolishingAi(true);
+    soundService.playPop();
+    try {
+      const polished = await polishVictoryMilestone({
+        title: newTitle,
+        details: newContent,
+        category: newCategory,
+        friendName: friend.name,
+        apiKey: settings?.apiKey,
+        apiEndpoint: settings?.apiEndpoint,
+        model: settings?.model,
+        provider: settings?.provider,
+      });
+      if (polished) {
+        setNewContent(polished);
+        soundService.playSuccess();
+        confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } });
+      }
+    } catch (err) {
+      console.error('Error polishing win with AI:', err);
+    } finally {
+      setIsPolishingAi(false);
+    }
+  };
+
   const handleCreateWin = (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
     soundService.playSuccess();
-    onAddWin({
+    const createdDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const winItem = {
       title: newTitle.trim(),
       content: newContent.trim(),
       category: newCategory.toLowerCase(),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    });
+      date: createdDate,
+    };
+
+    onAddWin(winItem);
+
+    if (alsoSendPostcard && onPrefillCard) {
+      onPrefillCard({
+        to: friend.name,
+        from: 'Your Biggest Fan',
+        msg: "Huge congratulations on your breakthrough: \"" + newTitle.trim() + "\"! " + (newContent ? newContent.trim() : 'Undeniable proof that you belong in the arena.'),
+        theme: newCategory === 'coding' ? 'cyber' : newCategory === 'career' ? 'solar' : 'sunset',
+        icon: '🏆',
+        badge: 'Victory Verified',
+        isReceived: false,
+      });
+    }
 
     setNewTitle('');
     setNewContent('');
+    setAlsoSendPostcard(false);
     setShowAddForm(false);
 
     confetti({
@@ -96,8 +276,11 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
 
   const handleExportBragSheet = () => {
     soundService.playSuccess();
-    const markdown = `# 🏆 ${friend.name}'s Victory Vault & Brag Sheet\n\nGenerated with HypePal AI\n\n` +
-      wins.map(w => `### ${w.title} (${w.date})\n*Category: ${w.category}*\n\n${w.content || 'Win recorded!'}\n`).join('\n---\n\n');
+    const markdown = "# 🏆 " + friend.name + "'s Victory Vault & Brag Sheet\n\nGenerated with HypePal AI • Mathematical Evidence Against Imposter Syndrome\n\n" +
+      "**Total Verified Breakthroughs:** " + wins.length + "\n" +
+      "**Current Momentum Streak:** " + streakStats.currentStreak + " Days (Longest: " + streakStats.longestStreak + " Days)\n" +
+      "**Mindset Armor Tier:** " + armorTier.name + "\n\n---\n\n" +
+      wins.map(w => "### " + w.title + " (" + w.date + ")\n*Category: " + w.category + "*\n\n" + (w.content || 'Victory recorded in vault.') + "\n").join('\n---\n\n');
 
     navigator.clipboard.writeText(markdown);
     setCopied(true);
@@ -112,7 +295,7 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
     } else {
       soundService.playPop();
       setSpeakingId(win.id);
-      const textToSpeak = `Victory milestone: ${win.title}. ${win.content || ''}`;
+      const textToSpeak = "Victory milestone: " + win.title + ". " + (win.content || '');
       speechService.speak(textToSpeak, {
         persona: 'mentor',
         onStart: () => setSpeakingId(win.id),
@@ -125,7 +308,7 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
   const handleCopySingleWin = (e, win) => {
     e.stopPropagation();
     soundService.playPop();
-    const text = `🏆 ${win.title} (${win.date})\n${win.content || ''}`;
+    const text = "🏆 " + win.title + " (" + win.date + ")\n" + (win.content || '');
     navigator.clipboard.writeText(text);
     setCopiedWinId(win.id);
     setTimeout(() => setCopiedWinId(null), 2000);
@@ -146,11 +329,9 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
     }
   };
 
-  const isFiltered = filterCategory !== 'all' || searchQuery.trim().length > 0;
-
   return (
     <div className="space-y-6 sm:space-y-8 animate-fadeIn">
-      {/* Header */}
+      {/* Header Banner */}
       <div className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 glass-panel border border-slate-800/80 bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-950/40 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="space-y-2 max-w-2xl">
@@ -162,7 +343,7 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
               {friend.name}'s Victory Vault 🏆
             </h2>
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-              When imposter syndrome attacks, it gives us amnesia about our past accomplishments. This vault stores undeniable proof of {friend.name}'s capability, growth, and hard-earned wins. Click any card to relive the breakthrough.
+              When imposter syndrome attacks, it gives us amnesia about our past accomplishments. This vault stores undeniable proof of {friend.name}'s capability, growth, and hard-earned wins. Click any card below to inspect the mathematical breakdown.
             </p>
           </div>
 
@@ -192,41 +373,52 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
         </div>
       </div>
 
-      {/* Interactive Top Stat Cards */}
+      {/* ALL 4 STAT CARDS FULLY CLICKABLE WITH DEEP MATHEMATICAL TRANSPARENCY */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Stat 1: Total Wins */}
         <button
           type="button"
           onClick={() => {
             soundService.playPop();
-            setFilterCategory('all');
+            setShowTotalWinsModal(true);
             confetti({ particleCount: 30, spread: 50, origin: { y: 0.3 } });
           }}
-          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-amber-400/50 transition-all text-left group cursor-pointer"
+          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-amber-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
         >
-          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <Award className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>Total Wins</span>
+          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span>Total Wins</span>
+            </div>
+            <span className="text-[10px] text-amber-400/80 font-mono">View ↗</span>
           </div>
           <p className="text-2xl sm:text-3xl font-black text-white">{wins.length}</p>
-          <span className="text-[10px] text-amber-400/80 group-hover:underline">Click to show all</span>
+          <span className="text-[10px] text-amber-400/80 group-hover:underline">Click for category analytics</span>
         </button>
 
-        {/* Stat 2: Hype Streak */}
+        {/* Stat 2: Hype Streak (Mathematical Calendar Calculation) */}
         <button
           type="button"
           onClick={() => {
             soundService.playFlame();
+            setShowStreakModal(true);
             confetti({ particleCount: 40, spread: 60, origin: { y: 0.3 } });
           }}
-          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-orange-400/50 transition-all text-left group cursor-pointer"
+          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-orange-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
         >
-          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <Flame className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
-            <span>Hype Streak</span>
+          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5">
+              <Flame className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
+              <span>Hype Streak</span>
+            </div>
+            <span className="text-[10px] text-orange-400/80 font-mono">Math ↗</span>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-orange-400">{Math.max(wins.length, 1)} Days</p>
-          <span className="text-[10px] text-orange-400/80 group-hover:underline">Active Momentum 🔥</span>
+          <p className="text-2xl sm:text-3xl font-black text-orange-400">
+            {streakStats.currentStreak > 0 ? streakStats.currentStreak : streakStats.longestStreak} { (streakStats.currentStreak > 0 ? streakStats.currentStreak : streakStats.longestStreak) === 1 ? 'Day' : 'Days' }
+          </p>
+          <span className="text-[10px] text-orange-400/80 group-hover:underline">
+            {streakStats.isStreakActive ? 'Active Momentum 🔥' : streakStats.longestStreak > 0 ? 'Best Streak (Log today to reignite)' : 'Start your streak today'}
+          </span>
         </button>
 
         {/* Stat 3: Rank Tier */}
@@ -236,11 +428,14 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
             soundService.playChime();
             setShowRankModal(true);
           }}
-          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-purple-400/50 transition-all text-left group cursor-pointer"
+          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-purple-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
         >
-          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <Sparkles className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
-            <span>Rank</span>
+          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
+              <span>Rank</span>
+            </div>
+            <span className="text-[10px] text-purple-400/80 font-mono">Roadmap ↗</span>
           </div>
           <p className="text-base sm:text-lg font-black text-purple-300 flex items-center gap-1.5 truncate">
             <span>{currentRank.badge}</span>
@@ -249,27 +444,40 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
           <span className="text-[10px] text-purple-400/80 group-hover:underline">Click to view roadmap</span>
         </button>
 
-        {/* Stat 4: Mindset Armor */}
-        <div className="p-4 rounded-2xl glass-card border border-slate-800 text-left">
-          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Mindset Armor</span>
+        {/* Stat 4: Mindset Armor (Clickable Modal) */}
+        <button
+          type="button"
+          onClick={() => {
+            soundService.playSuccess();
+            setShowArmorModal(true);
+            confetti({ particleCount: 30, spread: 50, origin: { y: 0.3 } });
+          }}
+          className="p-4 rounded-2xl glass-card border border-slate-800 hover:border-emerald-400/60 hover:bg-slate-900/90 transition-all text-left group cursor-pointer hover:-translate-y-0.5"
+        >
+          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span>Mindset Armor</span>
+            </div>
+            <span className="text-[10px] text-emerald-400/80 font-mono">Shield ↗</span>
           </div>
-          <p className="text-base sm:text-lg font-black text-emerald-400">
-            {wins.length >= 5 ? 'Diamond Tier 💎' : wins.length >= 3 ? 'Gold Tier 🥇' : 'Silver Tier 🥈'}
+          <p className="text-base sm:text-lg font-black text-emerald-400 truncate">
+            {armorTier.name}
           </p>
-          <span className="text-[10px] text-slate-500">Resilience Verified</span>
-        </div>
+          <span className="text-[10px] text-emerald-400/80 group-hover:underline">
+            {armorTier.rating} Imposter Defense • Details
+          </span>
+        </button>
       </div>
 
-      {/* Add Win Form Collapsible */}
+      {/* Add Win Form Collapsible with Optional AI Polish & Send Card to Friend */}
       {showAddForm && (
         <form onSubmit={handleCreateWin} className="p-5 sm:p-6 rounded-3xl glass-panel border border-amber-500/30 space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Record a New Victory for {friend.name}</span>
-            </h3>
+              <h3 className="text-sm sm:text-base font-bold text-white">Record a New Victory for {friend.name}</h3>
+            </div>
             <button
               type="button"
               onClick={() => setShowAddForm(false)}
@@ -282,7 +490,7 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
           <div className="space-y-3">
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                Milestone Title
+                Milestone Title *
               </label>
               <input
                 type="text"
@@ -312,9 +520,21 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
               </div>
 
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                  Quick Details / Breakthrough
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Quick Details / Breakthrough
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handlePolishWithAi}
+                    disabled={isPolishingAi || !newTitle.trim()}
+                    className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    title="Optionally polish notes with AI (or write manually)"
+                  >
+                    {isPolishingAi ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                    <span>{isPolishingAi ? 'Polishing...' : '✨ Polish with AI'}</span>
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={newContent}
@@ -323,6 +543,22 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-amber-400"
                 />
               </div>
+            </div>
+
+            {/* User choice: Send to Friend as Cheer Card */}
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={alsoSendPostcard}
+                  onChange={(e) => setAlsoSendPostcard(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-700 text-amber-500 focus:ring-amber-400 accent-amber-500 cursor-pointer"
+                />
+                <span>💌 Also send this victory as a Cheer Card to <strong>{friend.name}</strong></span>
+              </label>
+              <span className="text-[10px] text-slate-500">
+                {alsoSendPostcard ? 'Will prefill card in Postcard studio' : 'Vault-only entry'}
+              </span>
             </div>
           </div>
 
@@ -388,7 +624,7 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
             >
               <X className="w-3 h-3" />
             </button>
@@ -396,7 +632,7 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
         </div>
       </div>
 
-      {/* Wins Grid with Deep Interactivity */}
+      {/* Wins Grid */}
       {filteredWins.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredWins.map((win) => {
@@ -421,8 +657,8 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
                         soundService.playPop();
                         setFilterCategory(win.category?.toLowerCase() || 'coding');
                       }}
-                      title={`Filter by ${win.category}`}
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-all cursor-pointer hover:scale-105 ${getCategoryBadgeStyle(win.category)}`}
+                      title={"Filter by " + win.category}
+                      className={"text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-all cursor-pointer hover:scale-105 " + getCategoryBadgeStyle(win.category)}
                     >
                       {win.category}
                     </button>
@@ -448,21 +684,19 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
                   </span>
 
                   <div className="flex items-center gap-1">
-                    {/* Speak Button */}
                     <button
                       type="button"
                       onClick={(e) => handleSpeakWin(e, win)}
                       title={isSpeaking ? 'Stop speaking' : 'Read victory aloud'}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      className={"p-1.5 rounded-lg transition-colors cursor-pointer " + (
                         isSpeaking
                           ? 'bg-amber-500/20 text-amber-300'
                           : 'text-slate-400 hover:text-amber-300 hover:bg-slate-800'
-                      }`}
+                      )}
                     >
                       {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                     </button>
 
-                    {/* Copy Button */}
                     <button
                       type="button"
                       onClick={(e) => handleCopySingleWin(e, win)}
@@ -472,7 +706,6 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
                       {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
 
-                    {/* Delete Button */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -496,12 +729,12 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
           <Trophy className="w-12 h-12 text-slate-600 mx-auto" />
           <div className="space-y-1">
             <h4 className="text-base font-bold text-slate-200">
-              No victories found {filterCategory !== 'all' ? `in ${categories.find(c => c.id === filterCategory)?.label}` : ''}
+              No victories found {filterCategory !== 'all' ? ("in " + (categories.find(c => c.id === filterCategory)?.label || '')) : ''}
             </h4>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
               {searchQuery
-                ? `No wins matched "${searchQuery}". Try a different keyword.`
-                : `Nothing logged in this category yet. Record a new milestone to build up ${friend.name}'s armor!`
+                ? ("No wins matched \"" + searchQuery + "\". Try a different keyword.")
+                : ("Nothing logged in this category yet. Record a new milestone to build up " + friend.name + "'s armor!")
               }
             </p>
           </div>
@@ -517,7 +750,405 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
         </div>
       )}
 
-      {/* MODAL 1: "Relive the Victory" Detailed Inspection Modal */}
+      {/* MODAL 1: TOTAL WINS & CATEGORY ANALYTICS MODAL */}
+      {showTotalWinsModal && (
+        <div 
+          onClick={() => setShowTotalWinsModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-3xl glass-panel border border-amber-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base sm:text-lg font-bold text-white font-['Outfit']">
+                  Victory Vault Analytics
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowTotalWinsModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-amber-300 font-medium">Total Evidence Entries</p>
+                <p className="text-3xl font-black text-white">{wins.length} Breakthroughs</p>
+              </div>
+              <span className="text-3xl">🏆</span>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Breakdown by Domain
+              </h4>
+              <div className="space-y-2.5">
+                {[
+                  { label: 'Code & Tech', count: categoryCounts.coding, color: 'bg-cyan-500', text: 'text-cyan-400', id: 'coding', icon: '💻' },
+                  { label: 'Career & Interviews', count: categoryCounts.career, color: 'bg-indigo-500', text: 'text-indigo-400', id: 'career', icon: '💼' },
+                  { label: 'Wellness & Stamina', count: categoryCounts.wellness, color: 'bg-pink-500', text: 'text-pink-400', id: 'wellness', icon: '🌸' },
+                  { label: 'Life & Resilience', count: categoryCounts.life, color: 'bg-emerald-500', text: 'text-emerald-400', id: 'life', icon: '🌟' },
+                ].map((item) => {
+                  const percent = wins.length > 0 ? Math.round((item.count / wins.length) * 100) : 0;
+                  return (
+                    <div 
+                      key={item.id}
+                      onClick={() => {
+                        setFilterCategory(item.id);
+                        setShowTotalWinsModal(false);
+                      }}
+                      className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="font-semibold text-slate-200 flex items-center gap-1.5">
+                          <span>{item.icon}</span>
+                          <span className="group-hover:text-amber-300 transition-colors">{item.label}</span>
+                        </span>
+                        <span className="font-mono text-slate-400">
+                          <strong className={item.text}>{item.count}</strong> ({percent}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                        <div 
+                          className={"h-full " + item.color + " rounded-full transition-all duration-500"}
+                          style={{ width: percent + "%" }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterCategory('all');
+                  setShowTotalWinsModal(false);
+                }}
+                className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer"
+              >
+                View All in Vault
+              </button>
+              <button
+                type="button"
+                onClick={handleExportBragSheet}
+                className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+              >
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copied ? 'Brag Sheet Copied!' : 'Export Brag Sheet'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: MATHEMATICAL STREAK & MOMENTUM ENGINE MODAL */}
+      {showStreakModal && (
+        <div 
+          onClick={() => setShowStreakModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-3xl glass-panel border border-orange-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-400" />
+                <h3 className="text-base sm:text-lg font-bold text-white font-['Outfit']">
+                  Momentum & Streak Mathematics
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowStreakModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-orange-400">Current Streak</span>
+                <p className="text-3xl font-black text-white mt-1">
+                  {streakStats.currentStreak} {streakStats.currentStreak === 1 ? 'Day' : 'Days'}
+                </p>
+                <span className="text-[10px] text-orange-300">
+                  {streakStats.isStreakActive ? '🔥 Active consecutive streak' : '⚪ Grace period or paused'}
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">All-Time Longest</span>
+                <p className="text-3xl font-black text-white mt-1">
+                  {streakStats.longestStreak} {streakStats.longestStreak === 1 ? 'Day' : 'Days'}
+                </p>
+                <span className="text-[10px] text-amber-300">⚡ Peak resilience record</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-300 uppercase tracking-wider">Last 7 Calendar Days</span>
+                <span className="text-slate-400 font-mono text-[11px]">{streakStats.consistencyRate}% active (14-day)</span>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1.5 p-3 rounded-2xl bg-slate-900/90 border border-slate-800">
+                {streakStats.recentWeekMatrix.map((item, idx) => (
+                  <div 
+                    key={idx}
+                    className={"flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all " + (
+                      item.hasWin
+                        ? 'bg-orange-500/20 border-orange-500/40 text-orange-300 shadow-md shadow-orange-500/20'
+                        : item.isToday
+                        ? 'bg-slate-800/80 border-slate-700 text-slate-300'
+                        : 'bg-slate-950/40 border-slate-900 text-slate-600'
+                    )}
+                  >
+                    <span className="text-[10px] font-mono">{item.dayName}</span>
+                    <span className="text-lg my-0.5">{item.hasWin ? '🔥' : '⚪'}</span>
+                    <span className="text-[9px] font-mono text-slate-400">{item.dateLabel.split(' ')[1]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 space-y-1.5">
+              <div className="flex items-center gap-1.5 font-bold text-slate-200">
+                <Info className="w-3.5 h-3.5 text-orange-400" />
+                <span>Deterministic Calculation Logic:</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
+                • Standardized: Dates mapped to midnight timestamps <span className="text-amber-400 font-bold">Δt = 86,400,000 ms (24h)</span>.<br />
+                • Continuity: Consecutive days increment streak; non-consecutive days preserve all-time best.<br />
+                • Zero random generators. Every single day displayed is tied to actual recorded vault entries.
+              </p>
+            </div>
+
+            {streakStats.uniqueDaysList.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Recorded Milestone Dates ({streakStats.totalActiveDays} total active days):
+                </span>
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                  {streakStats.uniqueDaysList.slice(-8).reverse().map((d, i) => (
+                    <span key={i} className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-mono">
+                      ✓ {d}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowStreakModal(false)}
+              className="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+            >
+              Close Streak Matrix
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: RANK ROADMAP & PROGRESSION MODAL */}
+      {showRankModal && (
+        <div 
+          onClick={() => setShowRankModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-3xl glass-panel border border-purple-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                <h3 className="text-base sm:text-lg font-bold text-white font-['Outfit']">
+                  Resilience Rank Roadmap
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowRankModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-purple-500/15 border border-purple-500/30 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Current Status</span>
+                  <h4 className="text-xl font-black text-white flex items-center gap-1.5">
+                    <span>{currentRank.badge}</span>
+                    <span>{currentRank.name}</span>
+                  </h4>
+                </div>
+                <span className="text-xs font-mono font-bold px-2 py-1 rounded bg-purple-500/30 text-purple-200">
+                  {wins.length} Wins
+                </span>
+              </div>
+
+              {nextRank && (
+                <div className="space-y-1 pt-1">
+                  <div className="flex items-center justify-between text-[11px] text-purple-200">
+                    <span>Progress to {nextRank.name}</span>
+                    <span className="font-mono">{wins.length} / {nextRank.wins} ({nextRank.wins - wins.length} left)</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                      style={{ width: rankProgress + "%" }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2.5">
+              {RANK_TIERS.map((tier) => {
+                const isCurrent = currentRank.name === tier.name;
+                const isUnlocked = wins.length >= tier.wins;
+                return (
+                  <div
+                    key={tier.name}
+                    className={"p-3.5 rounded-2xl border transition-all flex items-center justify-between " + (
+                      isCurrent
+                        ? 'bg-purple-500/20 border-purple-400/60 shadow-md'
+                        : isUnlocked
+                        ? 'bg-slate-900/60 border-slate-800 text-slate-300'
+                        : 'bg-slate-900/30 border-slate-900 text-slate-600'
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{tier.badge}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className={"text-xs sm:text-sm font-bold " + (isCurrent ? 'text-purple-300' : isUnlocked ? 'text-white' : 'text-slate-500')}>
+                            {tier.name}
+                          </h4>
+                          {isCurrent && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-purple-500/30 text-purple-200">
+                              Active Tier
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400">{tier.desc}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-slate-400 shrink-0">
+                      {tier.wins} {tier.wins === 1 ? 'win' : 'wins'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowRankModal(false)}
+              className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors cursor-pointer"
+            >
+              Continue Conquering
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: MINDSET ARMOR & RESILIENCE MODAL */}
+      {showArmorModal && (
+        <div 
+          onClick={() => setShowArmorModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-3xl glass-panel border border-emerald-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-base sm:text-lg font-bold text-white font-['Outfit']">
+                  Mindset Armor & Imposter Defense
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowArmorModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Current Armor Tier</span>
+                <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">{armorTier.name}</p>
+                <p className="text-xs text-emerald-300 font-medium">{armorTier.status}</p>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl sm:text-3xl font-black text-emerald-400">{armorTier.rating}</span>
+                <span className="block text-[10px] text-slate-400">Defense Index</span>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Active Psychological Anchors
+              </h4>
+              <div className="space-y-2">
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
+                  <span className="text-lg">🛡️</span>
+                  <div>
+                    <h5 className="text-xs font-bold text-slate-200">Hard Evidence Bias Defense</h5>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Imposter syndrome thrives on subjective feelings of fraudulence. Having {wins.length} concrete logged artifacts gives the prefrontal cortex objective data to refute negative cognitive distortions.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
+                  <span className="text-lg">⚡</span>
+                  <div>
+                    <h5 className="text-xs font-bold text-slate-200">Panic-Proof Recall Memory</h5>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Under acute stress (interviews, outages), human working memory drops by 40%. The Victory Vault functions as externalized long-term memory proof that you have solved hard problems before.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
+                  <span className="text-lg">💎</span>
+                  <div>
+                    <h5 className="text-xs font-bold text-slate-200">Agency & Resilience Armor</h5>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Each logged victory rewires neural pathways through positive reinforcement, elevating self-efficacy and confidence.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowArmorModal(false)}
+              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors cursor-pointer"
+            >
+              Armor Verified
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: "RELIVE THE VICTORY" DETAILED INSPECTION MODAL */}
       {selectedWin && (
         <div 
           onClick={() => setSelectedWin(null)}
@@ -529,7 +1160,7 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${getCategoryBadgeStyle(selectedWin.category)}`}>
+                <span className={"text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border " + getCategoryBadgeStyle(selectedWin.category)}>
                   {selectedWin.category}
                 </span>
                 <span className="text-xs text-slate-500 font-mono">{selectedWin.date}</span>
@@ -562,7 +1193,6 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
               </div>
             </div>
 
-            {/* Modal Actions */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-800">
               <button
                 type="button"
@@ -588,7 +1218,19 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
                     type="button"
                     onClick={() => {
                       setSelectedWin(null);
-                      onNavigateTab('postcard');
+                      if (onPrefillCard) {
+                        onPrefillCard({
+                          to: friend.name,
+                          from: 'Your Biggest Fan',
+                          msg: "Celebrating your milestone: \"" + selectedWin.title + "\"! " + (selectedWin.content || 'Proof of your unstoppable momentum.'),
+                          theme: selectedWin.category === 'coding' ? 'cyber' : selectedWin.category === 'career' ? 'solar' : 'sunset',
+                          icon: '⚡',
+                          badge: 'Victory Verified',
+                          isReceived: false,
+                        });
+                      } else {
+                        onNavigateTab('postcard');
+                      }
                     }}
                     className="flex-1 sm:flex-initial py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
                   >
@@ -598,75 +1240,6 @@ export default function VictoryVault({ wins = [], onAddWin, onDeleteWin, friend,
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: Milestone Rank Progression Roadmap Modal */}
-      {showRankModal && (
-        <div 
-          onClick={() => setShowRankModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-3xl glass-panel border border-purple-500/30 p-5 sm:p-7 space-y-5 shadow-2xl relative"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <h3 className="text-sm sm:text-base font-bold text-white">Resilience Rank Roadmap</h3>
-              </div>
-              <button
-                onClick={() => setShowRankModal(false)}
-                className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {RANK_TIERS.map((tier) => {
-                const isCurrent = currentRank.name === tier.name;
-                const isUnlocked = wins.length >= tier.wins;
-                return (
-                  <div
-                    key={tier.name}
-                    className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
-                      isCurrent
-                        ? 'bg-purple-500/20 border-purple-400/60 shadow-md'
-                        : isUnlocked
-                        ? 'bg-slate-900/60 border-slate-800 text-slate-300'
-                        : 'bg-slate-900/30 border-slate-900 text-slate-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{tier.badge}</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className={`text-xs sm:text-sm font-bold ${isCurrent ? 'text-purple-300' : isUnlocked ? 'text-white' : 'text-slate-500'}`}>
-                            {tier.name}
-                          </h4>
-                          {isCurrent && (
-                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-purple-500/30 text-purple-200">
-                              Current
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-400">{tier.desc}</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-mono font-bold text-slate-400 shrink-0">
-                      {tier.wins} {tier.wins === 1 ? 'win' : 'wins'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <p className="text-xs text-center text-slate-400">
-              {friend.name} has recorded <strong className="text-amber-400">{wins.length}</strong> undeniable victories!
-            </p>
           </div>
         </div>
       )}

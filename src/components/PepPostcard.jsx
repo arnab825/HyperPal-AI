@@ -100,7 +100,8 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
   const [message, setMessage] = useState(sharedCard?.msg || PRESET_MESSAGES[0]);
   const [signature, setSignature] = useState(sharedCard?.from || 'Your Biggest Cheerleader');
 
-  const [customTab, setCustomTab] = useState('ai');
+  const [includeAi, setIncludeAi] = useState(false);
+  const [customTab, setCustomTab] = useState('text');
   const [copiedText, setCopiedText] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isReceivedCard, setIsReceivedCard] = useState(Boolean(sharedCard?.isReceived));
@@ -414,6 +415,61 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
         <div className="lg:col-span-6 space-y-4">
           <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl glass-card space-y-5">
             
+            {/* Primary Method Switcher: Handcrafted (No AI) vs AI Magic Composer */}
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-bold text-white">Creation Method</span>
+                  <span className={"text-[10px] font-bold px-2 py-0.5 rounded-full border " + (
+                    includeAi 
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' 
+                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  )}>
+                    {includeAi ? '✨ AI Assisted' : '✍️ 100% Human (No AI)'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {includeAi 
+                    ? "Co-pilot an emotional cheer with open weights or Gemini for " + friend.name + "."
+                    : "Write personal words directly from the heart to " + friend.name + " with zero AI generation."}
+                </p>
+              </div>
+
+              <div className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800 w-full sm:w-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundService.playPop();
+                    setIncludeAi(false);
+                    setCustomTab('text');
+                  }}
+                  className={"flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer " + (
+                    !includeAi
+                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                      : 'text-slate-400 hover:text-slate-200'
+                  )}
+                >
+                  <span>✍️ Write My Own (No AI)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundService.playPop();
+                    setIncludeAi(true);
+                    setCustomTab('ai');
+                  }}
+                  className={"flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer " + (
+                    includeAi
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200'
+                  )}
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                  <span>✨ AI Composer</span>
+                </button>
+              </div>
+            </div>
+
             {/* Customizer Mode Navigation Tabs */}
             <div className="flex items-center p-1 bg-slate-900/80 border border-slate-800 rounded-xl gap-1">
               <button
@@ -912,8 +968,13 @@ export default function PepPostcard({ friend, sharedCard, onUpdateFriend, settin
                   <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-500 block">Sent with heart from:</span>
                   <span className="text-xs sm:text-sm font-bold text-slate-200 truncate block">{signature}</span>
                 </div>
-                <div className="text-[9px] sm:text-[10px] text-slate-500 font-mono shrink-0">
-                  #BuildForAFriend
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-slate-900/90 border border-slate-800 text-slate-400">
+                    {includeAi ? '✨ AI Assisted' : '✍️ Handcrafted'}
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono hidden sm:inline">
+                    #BuildForAFriend
+                  </span>
                 </div>
               </div>
             </div>
